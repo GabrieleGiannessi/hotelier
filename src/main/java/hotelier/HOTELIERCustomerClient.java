@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.Socket;
@@ -29,8 +30,7 @@ public class HOTELIERCustomerClient {
     private static String greenColor = "\u001B[32m";
     private static String lightBlueColor = "\u001B[94m";
     private static String resetColor = "\u001B[0m";
-
-    
+    private static NotificheTask task = null; 
 
     public static void main(String[] args) {
 
@@ -151,6 +151,8 @@ public class HOTELIERCustomerClient {
                         if (res == 1){
                             auth_user = null; 
                             if (cleanupTask != null) Runtime.getRuntime().removeShutdownHook(cleanupTask); //tolgo la funzione di cleanup
+                            if (task != null) task = null; 
+
                             System.out.println("\n"+greenColor+"Logout effettuato con successo!"+resetColor+"\n");
                         }
                             
@@ -168,9 +170,10 @@ public class HOTELIERCustomerClient {
                         String città = b.readLine();
 
                         Hotel daStampare = searchHotel(nomeHotel, città.trim(), in, out);
+                        int numRecensioni = in.readInt(); 
                         if (daStampare != null) {
                             System.out.println("\n"+greenColor+"Ho trovato le seguenti informazioni:"+resetColor+"\n");
-                            visualizzaDettagliHotel(daStampare);
+                            visualizzaDettagliHotel(daStampare, numRecensioni);
                         } else {
                             System.out.println("\n"+redColor+"Hotel non trovato"+resetColor+"\n");
                         }
@@ -221,7 +224,7 @@ public class HOTELIERCustomerClient {
                         double globalScore = Double.parseDouble(b.readLine());
                         System.out.println();
 
-                        insertReview(nomeHotel, città, globalScore, new Ratings(cleaning, position, services, quality), in,
+                        insertReview(nomeHotel, città.trim(), globalScore, new Ratings(cleaning, position, services, quality), in,
                                 out);
                         break;
                     }
@@ -251,7 +254,9 @@ public class HOTELIERCustomerClient {
                     { 
                         exit = true;
                         auth_user = null; 
-                        if (cleanupTask != null) Runtime.getRuntime().removeShutdownHook(cleanupTask); //tolgo la funzione di cleanup      
+                        if (cleanupTask != null) Runtime.getRuntime().removeShutdownHook(cleanupTask); //tolgo la funzione di cleanup  
+                        if (task != null) task = null;
+                            
                         break;
                     }
 
@@ -345,7 +350,6 @@ public class HOTELIERCustomerClient {
 
     @SuppressWarnings("deprecation")
     public static Utente login(Utente u, ObjectInputStream in, ObjectOutputStream out) {
-        NotificheTask task = null; 
         try {
             out.writeObject(u);
 
@@ -476,25 +480,19 @@ public class HOTELIERCustomerClient {
             if (res == 1) {
 
                 System.out.println("\n"+greenColor+"Ho trovato i seguenti Hotel: "+resetColor+"\n");
-                // ha trovato degli hotel da stampare
-                Object listaRicevuta;
-                while ((listaRicevuta = in.readObject()) == null) {
-                }
+                
+                Hotel hotel;
 
-                if (listaRicevuta instanceof List<?>) {
-                    List<?> temp = (List<?>) listaRicevuta;
-                    if (!temp.isEmpty() && temp.get(0) instanceof Hotel) {
-                        for (int i = 0; i < temp.size(); i++) {
-                            Hotel daStampare = (Hotel) temp.get(i);
-                            visualizzaDettagliHotel(daStampare);
-                        }
-                    }
+                while ((hotel = (Hotel) in.readObject()) != null){ 
+                    int numRecensioni = in.readInt();
+                    visualizzaDettagliHotel(hotel, numRecensioni);  
                 }
 
             } else {
                 System.out.println("\n"+redColor+"Non sono stati trovati hotel per la determinata città"+resetColor+"\n");
                 System.out.println();
-            }
+            }        
+                
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException ce) {
@@ -530,7 +528,7 @@ public class HOTELIERCustomerClient {
         }    
     }
 
-    public static void visualizzaDettagliHotel (Hotel h){
+    public static void visualizzaDettagliHotel (Hotel h, int numRecensioni){
 
         Ratings ratingsHotel = h.getRatings(); 
 
@@ -540,9 +538,17 @@ public class HOTELIERCustomerClient {
          System.out.println(lightBlueColor+"  Nome : "+resetColor+h.getName() +"");
          System.out.println(lightBlueColor+"  Città : "+resetColor+h.getCity() +"");
          System.out.println(lightBlueColor+"  Descrizione : "+resetColor+h.getDescription() +"");
-         System.out.println(lightBlueColor+"  Numero di telefono : "+resetColor+h.getPhone() +"\n");
+         System.out.println(lightBlueColor+"  Numero di telefono : "+resetColor+h.getPhone() +"");
+         if (!h.getServices().isEmpty()){
+            System.out.println(lightBlueColor+"  Lista dei servizi : "+resetColor+"");
+         for (String service : h.getServices()){
+             System.out.println("\t♦ "+service+"");
+        }
+        }
          
-         System.out.println("  VOTI HOTEL");
+
+         System.out.println();  
+         System.out.println("  VOTI HOTEL ("+numRecensioni+" recensioni)");
          System.out.println(lightBlueColor+"  Pulizia : "+resetColor+ratingsHotel.getCleaning() +"");
          System.out.println(lightBlueColor+"  Posizione : "+resetColor+ratingsHotel.getPosition() +"");
          System.out.println(lightBlueColor+"  Qualità : "+resetColor+ratingsHotel.getQuality() +"");

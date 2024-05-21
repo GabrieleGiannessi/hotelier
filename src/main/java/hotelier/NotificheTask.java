@@ -17,6 +17,7 @@ public class NotificheTask implements Runnable {
         this.group = group;
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void run() {
         try {
@@ -25,15 +26,18 @@ public class NotificheTask implements Runnable {
 
             // Ciclo per ricevere le notifiche
             while (run) {
-                if (!interrupted)
                     m.receive(packet); // Questo metodo bloccherà l'esecuzione finché non arriverà un pacchetto dal
                                        // server
 
                 // Elabora il pacchetto ricevuto
                 String message = new String(packet.getData(), 0, packet.getLength());
 
-                if (message.equals("[FINE]"))
+                if (message.equals("[FINE]")){
+                    m.leaveGroup(InetAddress.getByName(group)); // Lascia il gruppo multicast prima di chiudere il socket
+                    m.close();
                     break;
+                }
+                    
                 System.out.println("[NOTIFICA] " + message);
 
             }
@@ -41,17 +45,4 @@ public class NotificheTask implements Runnable {
             e.printStackTrace();
         }
     }
-
-    @SuppressWarnings("deprecation")
-    public void stopRun() {
-        run = false;
-        interrupted = true;
-        try {
-            m.leaveGroup(InetAddress.getByName(group)); // Lascia il gruppo multicast prima di chiudere il socket
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-        m.close();
-    }
-
 }

@@ -32,4 +32,13 @@ public class LocalRank {
     public void addLocalHotel (LocalRankHotel h){
         if (listaLocalHotel != null) listaLocalHotel.add(h); 
     }
+
+    public LocalRankHotel searchHotelByRank (int rank){
+        for (LocalRankHotel h : listaLocalHotel){
+            if (h.getRank() == rank){
+                return h; 
+            }
+        }
+        return null;
+    }
 }

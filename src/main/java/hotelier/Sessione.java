@@ -261,7 +261,15 @@ public class Sessione implements Runnable {
                         }
 
                         if (f_nome && f_città) {
+                            //calcolo il numero di recensioni associate all'Hotel
+                            List <Recensione> recensioni = scanRecensioni(); 
+                            int c = 0; 
+                            for (Recensione r : recensioni){
+                                if (r.getNomeHotel().equals(nomeHotel)) c++; 
+                            }
+
                             out.writeObject(searchedHotel);
+                            out.writeInt(c); //numero di recensioni
                             out.flush();
                         }
 
@@ -270,7 +278,7 @@ public class Sessione implements Runnable {
 
                     case 5: // searchAllHotels
                     {
-                        List<Hotel> listaHotel = scanHotels();
+                        List<LocalRank> listaRanks = scanLocalRankings();
                         String città; // ricevo il nome della città ed effettuo la query
                         while ((città = in.readUTF()).isEmpty()) {
                         }
@@ -278,10 +286,13 @@ public class Sessione implements Runnable {
                         boolean presente = false;
                         List<Hotel> daStampare = new ArrayList<Hotel>();
 
-                        for (Hotel h : listaHotel) {
-                            if (h.getCity().equals(città)) {
+                        for (LocalRank l: listaRanks) {
+                            if (l.getCittà().equals(città)) {
                                 presente = true;
-                                daStampare.add(h);
+                                for (LocalRankHotel h : l.getListaLocalHotel()){
+                                    daStampare.add(h.getH()); 
+                                }
+                                break; 
                             }
                         }
 
@@ -289,7 +300,20 @@ public class Sessione implements Runnable {
                             out.writeInt(1); // messaggio di conferma
                             out.flush();
 
-                            out.writeObject(daStampare); // lista
+                            for (Hotel h : daStampare){
+                                //calcolo il numero di recensioni associate all'hotel h
+                                List <Recensione> recensioniHotel = scanRecensioni(); 
+                                int c = 0;
+                                for (Recensione r: recensioniHotel){
+                                    if (r.getNomeHotel().equals(h.getName())) c++; 
+                                }
+
+                                out.writeObject(h); // hotel
+                                out.writeInt(c);
+                                out.flush();
+                            }
+
+                            out.writeObject(null); //gli hotel sono finiti 
                             out.flush();
 
                         } else {
@@ -297,7 +321,6 @@ public class Sessione implements Runnable {
                             out.flush();
                             break;
                         }
-
                         break;
                     }
 
@@ -440,11 +463,11 @@ public class Sessione implements Runnable {
                             // lato sessione
                     {
                         if (user != null && user.isLogged()){
+                            sendUDPmessage(m); //per terminare il thread notifiche nel client
                             user.setLogged(false); 
                             saveUtente(user, in, out);
                             user = null;
 
-                            sendUDPmessage(m); //per terminare il thread notifiche nel client
                         } 
 
                         exit = true;
@@ -509,6 +532,22 @@ public class Sessione implements Runnable {
             e.printStackTrace();
         }
         return recensioni;
+    }
+
+    // converte il file JSON dei ranking in una struttura dati (che implementa
+    // List) maneggevole
+    public synchronized static List<LocalRank> scanLocalRankings(){
+        String rankingPath = "Rankings.json";    
+        List<LocalRank> localRankList = new ArrayList<LocalRank>();
+        try {
+            Type localRankListType = new TypeToken<List<LocalRank>>() {
+            }.getType();
+            localRankList = new Gson().fromJson(new FileReader(rankingPath), localRankListType);
+        } catch (FileNotFoundException e) {
+            System.err.println("I/O error while reading the file: " + rankingPath);
+            e.printStackTrace();
+        }
+        return localRankList;
     }
 
     //salva i dati dell'utente (identificato tramite l'oggetto) nel file utenti.json

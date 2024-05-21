@@ -50,7 +50,7 @@ public class CalcoloRanking implements Runnable {
     @Override
     public void run() {
          
-        List <LocalRank> before = scanLocalRankings();
+        List <LocalRank> before = scanLocalRankings(); //faccio una scansione dei ranking prima di aggiornare i valori dei rate degli hotel
         if (before == null){
             makeLocalRankings();
             before = scanLocalRankings();
@@ -59,32 +59,32 @@ public class CalcoloRanking implements Runnable {
         aggiornaRatingHotels(); //si aggiornano i rates (voti) degli hotel
         List <LocalRank> after = aggiornaRankingLocali(); //ricalcolo le posizioni degli hotel in base alle recensioni (del momento)
 
-         /* 
-        for (Hotel i : after){
-            boolean flag = false; //flag per capire se il local ranking è cambiato per la determinata città
-            for (Hotel j : before){
-                if (i.getCity().equals(j.getCity())){
-                    if (!i.getName().equals(j.getName())){
-                        flag = true; 
-                        break; 
-                    }
-                }
-            }
 
-            
-            if (flag){ //se il ranking è cambiato mandiamo il messaggio
-                try{
-                    
-                String mess = "Ranking locale cambiato per "+ i.getCity()+ " : "+i.getName()+ " \n";
-                DatagramPacket dp = new DatagramPacket(mess.getBytes(), mess.length(), InetAddress.getByName(group), port);
-                m.send(dp);
-                
-                }catch (IOException e){
-                    e.printStackTrace();
+        //bisogna mandare a questo punto le notifiche al client se sono cambiati qualche primo posto nei rank locali
+
+        for (LocalRank i : after){
+            for (LocalRank j : before){
+                if (j.getCittà().equals(i.getCittà())){
+                    //controlliamo se la posizione cambia
+                    LocalRankHotel i_after = i.searchHotelByRank(1); 
+                    LocalRankHotel i_before = j.searchHotelByRank(1);
+
+                    if (!i_after.getH().getName().equals(i_before.getH().getName())){
+                        //mandiamo la notifica
+                        try{
+                            String mess = "Ranking locale cambiato per "+ i.getCittà() + " : "+i_after.getH().getName()+ " \n";
+                            DatagramPacket dp = new DatagramPacket(mess.getBytes(), mess.length(), InetAddress.getByName(group), port);
+                            m.send(dp);
+                        }catch (IOException e){
+                            System.err.println("Errore durante trasferimento messaggio UDP");
+                            e.printStackTrace();
+                        }
+                    }
+
+                  break;   
                 }
             }
-        }
-*/              
+        }              
     }
 
     /**
@@ -160,16 +160,17 @@ public class CalcoloRanking implements Runnable {
 
             if (cityRankHotels != null && !cityRankHotels.isEmpty()){
                 //ricalcolo il rank degli hotel della determinata città
-                List<LocalRankHotel> nuovoRank = new ArrayList<LocalRankHotel>();
+                List<LocalRankHotel> nuovaListaRankHotel = new ArrayList<LocalRankHotel>();
                 int i = 1; //indice per la posizione in classifica
                 while (cityRankHotels.size() != 0){
                     LocalRankHotel daInserire = getBestHotel(cityRankHotels); //prendo sempre il migliore e lo classifico
-                    System.out.println(daInserire.getH().getName());
+
+                    if (daInserire != null){
                     daInserire.setRank(i++);
-                    nuovoRank.add(daInserire);
+                    nuovaListaRankHotel.add(daInserire);
 
                     //usiamo un iteratore per rimuovere l'elemento dalla lista degli hotel della città
-                    //System.out.println(cityRankHotels.size());
+                    
                     Iterator<LocalRankHotel> iterator = cityRankHotels.iterator();
                         while (iterator.hasNext()) {
                             LocalRankHotel hotel = iterator.next();
@@ -178,15 +179,14 @@ public class CalcoloRanking implements Runnable {
                                 break;
                             }
                         }
-                   // System.out.println(cityRankHotels.size());
                 }
-                daSalvare.add(new LocalRank(c, nuovoRank)); //ranking locale aggiornato
+            }            
+                daSalvare.add(new LocalRank(c, nuovaListaRankHotel)); //ranking locale aggiornato   
             }
         }
 
         //lo salvo sul file rankings.json
         saveRankings(daSalvare);
-
         return daSalvare; 
     }
 
@@ -277,15 +277,17 @@ public class CalcoloRanking implements Runnable {
 
     public static LocalRankHotel getBestHotel (List <LocalRankHotel> listaHotels){
 
+        if (listaHotels == null || listaHotels.isEmpty()) return null; 
+
         LocalRankHotel res = new LocalRankHotel(new Hotel(new Ratings(0, 0, 0, 0)), 0);
 
         for (LocalRankHotel h : listaHotels){
             
-            if (h.getH().getRate() > res.getH().getRate()){
-                if (h.getH().getRatings().getCleaning() > res.getH().getRatings().getCleaning() && h.getH().getRatings().getPosition() > res.getH().getRatings().getPosition() && 
-                h.getH().getRatings().getQuality() > res.getH().getRatings().getQuality() && h.getH().getRatings().getServices() > res.getH().getRatings().getServices()){
+            if (h.getH().getRate() >= res.getH().getRate()){
+                //if (h.getH().getRatings().getCleaning() > res.getH().getRatings().getCleaning() && h.getH().getRatings().getPosition() > res.getH().getRatings().getPosition() && 
+                //h.getH().getRatings().getQuality() > res.getH().getRatings().getQuality() && h.getH().getRatings().getServices() > res.getH().getRatings().getServices()){
                     res = h; 
-                }
+                //}
             }
         }
         
