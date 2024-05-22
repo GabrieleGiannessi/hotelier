@@ -8,11 +8,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.Socket;
-import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -97,7 +95,6 @@ public class HOTELIERCustomerClient {
                             System.out.println("Scrivere le credenziali in un formato adeguato.");
                             System.out.print("Immetti username : ");
                             String user = b.readLine();
-                            System.out.println();
                             System.out.print("Immetti password : ");
                             String pass = b.readLine();
                             System.out.println();
@@ -133,7 +130,6 @@ public class HOTELIERCustomerClient {
                                 cleanupTask = new CleanupTask(auth_user);
                                 Runtime.getRuntime().addShutdownHook(cleanupTask);                     
                             }
-                            else System.out.println("\n"+redColor+"Operazione fallita!"+resetColor+"\n");
 
                         } else {
                             System.out.println(
@@ -169,9 +165,9 @@ public class HOTELIERCustomerClient {
                         System.out.print("Inserisci la città: ");
                         String città = b.readLine();
 
-                        Hotel daStampare = searchHotel(nomeHotel, città.trim(), in, out);
-                        int numRecensioni = in.readInt(); 
+                        Hotel daStampare = searchHotel(nomeHotel, (città.substring(0, 1).toUpperCase() + città.substring(1)).trim(), in, out);
                         if (daStampare != null) {
+                            int numRecensioni = in.readInt(); 
                             System.out.println("\n"+greenColor+"Ho trovato le seguenti informazioni:"+resetColor+"\n");
                             visualizzaDettagliHotel(daStampare, numRecensioni);
                         } else {
@@ -185,7 +181,7 @@ public class HOTELIERCustomerClient {
                         System.out.print("Inserisci la città: ");
                         String città = b.readLine();
 
-                        searchAllHotels(città.trim(), in, out);
+                        searchAllHotels((città.substring(0, 1).toUpperCase() + città.substring(1)).trim(), in, out);
                         break;
 
                     }
@@ -302,28 +298,31 @@ public class HOTELIERCustomerClient {
             int res = -1;
             while ((res = in.readInt()) == -1) {
             } // attesa
-
             switch (res) {
                 case 0:{
+                    //utente già registrato
                     System.out.println("\n"+redColor +"Username già presente nel servizio"+resetColor+"\n");
                     break;
                 }
                 case 1:{
+                    //messaggio di avvenuta registrazione
                     System.out.println("\n"+greenColor+"Operazione effettuata con successo"+resetColor+"\n");
                     break; 
                 }
-                case 2:{
 
+                case 2:{
+                    //messaggio di errore sulle credenziali
                     String mess;
                     while ((mess =  in.readUTF()).isEmpty()){}
 
-                    System.out.println(mess);
+                    System.out.println("\n"+redColor+mess+resetColor+"\n");
                     break; 
                 }
-                 
+                       
                 default:
                     break;
-            }          
+            }       
+                     
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -367,18 +366,33 @@ public class HOTELIERCustomerClient {
             while ((res = in.readInt()) == -1) {
             } // attesa
             
-            if (res == 0) {
-                return null; 
-            } 
+            switch (res){
+                case 0: {
+                    //messaggio di autenticazione non riuscita
+                    System.out.println("\n"+redColor+"Autenticazione fallita!"+resetColor+"\n");
+                    return null; 
+                }
+                case 1: {
+                    //autenticazione riuscita
+                    Utente auth_user = (Utente) in.readObject(); 
+                    MulticastSocket m = new MulticastSocket(port);
+                    m.joinGroup(InetAddress.getByName(group)); //mi iscrivo al gruppo multicast per ricevere le notifiche dal server
+                    task = new NotificheTask(m, group);
+                    e.execute(task); //faccio partire il task che attende le notifiche e le stampa
             
-            // Login effettuato
-            Utente auth_user = (Utente) in.readObject(); 
-            MulticastSocket m = new MulticastSocket(port);
-            m.joinGroup(InetAddress.getByName(group)); //mi iscrivo al gruppo multicast per ricevere le notifiche dal server
-            task = new NotificheTask(m, group);
-            e.execute(task); //faccio partire il task che attende le notifiche e le stampa
+                    return auth_user;   
+                }
+                case 2: {
+                    //messaggio di errore sulle credenziali
+                    String mess;
+                    while ((mess =  in.readUTF()).isEmpty()){}
+
+                    System.out.println("\n"+redColor+mess+resetColor+"\n");
+                    return null;
+                }
+            }
             
-            return auth_user; 
+            
             
         } catch (IOException e) {
             e.printStackTrace();
@@ -411,15 +425,15 @@ public class HOTELIERCustomerClient {
                 }
 
                 if (r2 == 1) {
-                    // hotel trovato
+                    // hotel trovato : abbiamo controllato se l'hotel appartiene alla città mandata in input
                     Object inObject;
                     while ((inObject = in.readObject()) == null) {
                     }
 
                     if (inObject instanceof Hotel)
                         res = (Hotel) inObject;
-                }
-            }
+                }else return null; 
+            }else return null; 
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException c) {

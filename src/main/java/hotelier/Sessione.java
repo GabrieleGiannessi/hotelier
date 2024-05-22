@@ -59,22 +59,22 @@ public class Sessione implements Runnable {
                         // ricevo l'utente in input
                         Utente utente = (Utente) in.readObject();
 
-                        if (checkUsername(utente.getUsername()) && checkPassword(utente.getPassword())) { 
+                        if (!checkUsername(utente.getUsername()) && !checkPassword(utente.getPassword())) { 
                             out.writeInt(2); //errore sintassi credenziali utente
-                            out.writeUTF("Credenziali non corrette "); // mandiamo il badge
+                            out.writeUTF("Credenziali non corrette (Lo username deve contenere almeno 5 caratteri, e la password almeno 8)"); // mandiamo il badge
                             out.flush();
                             break;
                         }
                     
-                        else if (checkUsername(utente.getUsername())) {
+                        else if (!checkUsername(utente.getUsername())) {
                             out.writeInt(2); //errore sintassi credenziali utente
-                            out.writeUTF("Username non corretto "); // mandiamo il badge
+                            out.writeUTF("Username non corretto (Lo username deve contenere almeno 5 caratteri)"); // mandiamo il badge
                             out.flush();    
                             break;
 
-                        } else if (checkPassword(utente.getPassword())) {
+                        } else if (!checkPassword(utente.getPassword())) {
                             out.writeInt(2); //errore sintassi credenziali utente
-                            out.writeUTF("Password non corretta "); // mandiamo il badge
+                            out.writeUTF("Password non corretta (La password deve contenere almeno 8 caratteri e non deve contenere spazi)"); // mandiamo il badge
                             out.flush();
                             break; 
 
@@ -115,7 +115,7 @@ public class Sessione implements Runnable {
                             e.printStackTrace();
                         }
 
-                        out.writeInt(1);
+                        out.writeInt(1); //la registrazione ha avuto successo 
                         out.flush();
                         break;
                     }
@@ -137,26 +137,27 @@ public class Sessione implements Runnable {
 
                         Utente inputUser = (Utente) in.readObject(); // ricevo l'utente in input
 
-                        boolean f = false;
-                        if (checkUsername(inputUser.getUsername()) && checkPassword(inputUser.getPassword())) {
-                            f = true;
-                            break; 
-                        }
-                
-                        else if (checkUsername(inputUser.getUsername())) {
-                            f = true;
-                            break; 
-
-                        } else if (checkPassword(inputUser.getPassword())) {
-                            f = true;
-                            break;      
-                        }
-
-                        if (f){
-                            out.writeInt(0); //errori nella sintassi di username o password
+                        if (!checkUsername(inputUser.getUsername()) && !checkPassword(inputUser.getPassword())) {
+                            out.writeInt(2); //errore sintassi credenziali utente
+                            out.writeUTF("Credenziali non corrette (Lo username deve contenere almeno 5 caratteri, e la password almeno 8)"); // mandiamo il badge
                             out.flush();
                             break;
                         }
+                
+                        else if (!checkUsername(inputUser.getUsername())) {
+                            out.writeInt(2); //errore sintassi credenziali utente
+                            out.writeUTF("Username non corretto (Lo username deve contenere almeno 5 caratteri)"); // mandiamo il badge
+                            out.flush();    
+                            break;
+
+                        } else if (!checkPassword(inputUser.getPassword())) {
+                            out.writeInt(2); //errore sintassi credenziali utente
+                            out.writeUTF("Password non corretta (La password deve contenere almeno 8 caratteri e non deve contenere spazi)"); // mandiamo il badge
+                            out.flush();
+                            break; 
+                        }
+
+                        //se la sintassi di username e password è corretta procediamo con i controlli successivi
                 
                         List<Utente> listaUtenti = scanUtenti(); // prelevo la lista degli utenti dal file
                         if (listaUtenti == null) {
@@ -582,7 +583,7 @@ public class Sessione implements Runnable {
      */
 
     public static boolean checkUsername(String username) {
-        return (username.equals(null) && username.contains(" ") || username.length() < 5);
+        return (username != null && !username.contains(" ") && username.length() >= 5);
     }
 
     /**
@@ -592,7 +593,7 @@ public class Sessione implements Runnable {
      * @return un booleano che indica se l'username è semanticamente corretto
      */
     public static boolean checkPassword(String pass) {
-        return (pass.equals(null) || pass.contains(" ") || pass.length() < 8);
+        return pass != null && !pass.contains(" ") && pass.length() >= 8;
     }
 
     public void sendUDPmessage (MulticastSocket m){
