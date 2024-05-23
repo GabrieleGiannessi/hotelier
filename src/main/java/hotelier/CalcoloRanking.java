@@ -1,11 +1,6 @@
 package hotelier;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
@@ -15,45 +10,31 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
 /**
  * Task che esegue il calcolo del ranking e si occupa di mandare un messaggio UDP broadcast agli utenti loggati  
  */
 
 public class CalcoloRanking implements Runnable {
 
-    //ho bisogno di caricare la lista delle recensioni, e memorizzare in una struttura l'insieme dei voti complessivo per un determinato hotel (Potrei istanziare un oggetto Recensione)
-    //attraverso queste strutture vado ad aggiornare la lista degli hotel
-
-    /**
-     * Il rank locale di un hotel viene calcolato in base alla posizione di quell’hotel rispetto a tutti gli altri hotel della stessa città.
-     * Come posso aggiornare i ranking degli hotel?
-     * 1. Prelevare l'insieme delle recensioni e degli hotel
-     * 2. Per ogni hotel, salvare le recensioni che riguardano il determinato hotel (doppio for)
-     * 3. In questi insiemi (dopo il secondo for ma dentro il primo) farò il calcolo vero e proprio : conterò qualità e quantità delle recensioni per ogni hotel
-     * 4. effettuato il calcolo lo salvo in Hotel
-     * 5. Finito il secondo for, salvo i risultati nel file
-     *  */ 
-
     private MulticastSocket m; 
     private String group;
     private int port; 
+    private JsonDB db; 
 
-    public CalcoloRanking (MulticastSocket m, String group, int port){
+    public CalcoloRanking (MulticastSocket m, String group, int port, JsonDB db){
         this.m = m; 
         this.group = group;
         this.port = port; 
+        this.db = db; 
     }
 
     @Override
     public void run() {
          
-        List <LocalRank> before = scanLocalRankings(); //faccio una scansione dei ranking prima di aggiornare i valori dei rate degli hotel
+        List <LocalRank> before = db.scanLocalRankings(); //faccio una scansione dei ranking prima di aggiornare i valori dei rate degli hotel
         if (before == null){
             makeLocalRankings();
-            before = scanLocalRankings();
+            before = db.scanLocalRankings();
         } 
         
         aggiornaRatingHotels(); //si aggiornano i rates (voti) degli hotel
@@ -92,9 +73,9 @@ public class CalcoloRanking implements Runnable {
      * sono state fatte 
      */
 
-    public static void aggiornaRatingHotels (){
-        List <Hotel> hotels = scanHotels(); 
-        List <Recensione> recensioni = scanRecensioni(); 
+    public void aggiornaRatingHotels (){
+        List <Hotel> hotels = db.scanHotels(); 
+        List <Recensione> recensioni = db.scanRecensioni(); 
 
         for (Hotel h : hotels){
             List <Recensione> recensioniHotel = new ArrayList<Recensione>(); 
@@ -114,11 +95,11 @@ public class CalcoloRanking implements Runnable {
             }
         }
 
-        saveHotels(hotels); //salviamo nel file la lista aggiornata
+        db.saveHotels(hotels); //salviamo nel file la lista aggiornata
 
         //propaghiamo la lista aggiornata degli hotel ai rank
 
-        List <LocalRank> localRanks = scanLocalRankings();
+        List <LocalRank> localRanks = db.scanLocalRankings();
         List <LocalRank> daSalvare = new ArrayList<LocalRank>(); 
 
         for (LocalRank l : localRanks){
@@ -135,7 +116,7 @@ public class CalcoloRanking implements Runnable {
             }
         }
 
-        saveRankings(daSalvare);
+        db.saveRankings(daSalvare);
     }
 
     /**
@@ -144,9 +125,9 @@ public class CalcoloRanking implements Runnable {
      * Per ogni città prendo il pool local rank (insieme degli hotel della città) e lo salvo. Da questo pool estraggo sempre l'hotel 'migliore' : globalRate più alto (calcolato tramite le recensioni) e lo tolgo dal pool per
      * metterlo in una lista ordinata (classifica aggiornata) da salvare 
      */
-    public static List<LocalRank> aggiornaRankingLocali (){ 
-        List <String> cities = getAllCities(); //mi salvo le città
-        List <LocalRank> localRanks = scanLocalRankings(); //rank attuali locali
+    public List<LocalRank> aggiornaRankingLocali (){ 
+        List <String> cities = db.getAllCities(); //mi salvo le città
+        List <LocalRank> localRanks = db.scanLocalRankings(); //rank attuali locali
         List <LocalRank> daSalvare = new ArrayList<LocalRank>(); 
 
         for (String c : cities){
@@ -186,7 +167,7 @@ public class CalcoloRanking implements Runnable {
         }
 
         //lo salvo sul file rankings.json
-        saveRankings(daSalvare);
+        db.saveRankings(daSalvare);
         return daSalvare; 
     }
 
@@ -263,18 +244,6 @@ public class CalcoloRanking implements Runnable {
         
     }
 
-    public static List<String> getAllCities (){
-        List <String> res = new ArrayList<String>(); 
-        List<Hotel> listaHotels = scanHotels(); 
-        for (Hotel h : listaHotels){
-            if (!res.contains(h.getCity())){
-                res.add(h.getCity());
-            }
-        }
-
-        return res; 
-    }
-
     public static LocalRankHotel getBestHotel (List <LocalRankHotel> listaHotels){
 
         if (listaHotels == null || listaHotels.isEmpty()) return null; 
@@ -296,9 +265,9 @@ public class CalcoloRanking implements Runnable {
      * Inserisce dentro il file "Rankings.json" un'inizializzazione dei rank 
      */ 
 
-    public static void makeLocalRankings(){
-        List<Hotel> listaHotels = scanHotels(); 
-        List<String> listaCitta = getAllCities();
+    public void makeLocalRankings(){
+        List<Hotel> listaHotels = db.scanHotels(); 
+        List<String> listaCitta = db.getAllCities();
         List <LocalRank> daStampare = new ArrayList<LocalRank>(); 
         
         for (String city : listaCitta){
@@ -312,77 +281,7 @@ public class CalcoloRanking implements Runnable {
         }
         
         //aggiungo la lista iniziale dei rank locali al file Rankings.json
-        saveRankings(daStampare);
+        db.saveRankings(daStampare);
     }
-
-    /**
-     * Funzione che restituisce l'insieme dei rank locali per ogni città. 
-     * @return LocalRankList, Lista che contiene i rank locali per ogni città
-     */
-
-    public synchronized static List<LocalRank> scanLocalRankings(){
-        String rankingPath = "Rankings.json";    
-        List<LocalRank> localRankList = new ArrayList<LocalRank>();
-        try {
-            Type localRankListType = new TypeToken<List<LocalRank>>() {
-            }.getType();
-            localRankList = new Gson().fromJson(new FileReader(rankingPath), localRankListType);
-        } catch (FileNotFoundException e) {
-            System.err.println("I/O error while reading the file: " + rankingPath);
-            e.printStackTrace();
-        }
-        return localRankList;
-    }
-
-    
-    public synchronized static List<Hotel> scanHotels() {
-        String hotelPath = "Hotels.json";
-        List<Hotel> hotels = new ArrayList<Hotel>();
-        try {
-            Type hotelListType = new TypeToken<List<Hotel>>() {
-            }.getType();
-            hotels = new Gson().fromJson(new FileReader(hotelPath), hotelListType); // hotel deserializzati
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        return hotels;
-    }
-
-    public synchronized static List<Recensione> scanRecensioni() {
-        String recensioniPath = "Recensioni.json";
-        List<Recensione> recensioni = new ArrayList<Recensione>();
-        try {
-            Type recensioneListType = new TypeToken<List<Recensione>>() {
-            }.getType();
-            recensioni = new Gson().fromJson(new FileReader(recensioniPath), recensioneListType);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        return recensioni;
-    }
-
-    public synchronized static void saveHotels (List<Hotel> listaHotels){
-
-        File input = new File(
-                "Hotels.json");
-        try (FileWriter writer = new FileWriter(input)) {
-            new Gson().toJson(listaHotels, writer);
-        } catch (IOException e) {
-            e.printStackTrace();
-            }
-        }
-    
-
-    public synchronized static void saveRankings (List <LocalRank> listaRank){
-        File input = new File(
-            "Rankings.json");
-            try (FileWriter writer = new FileWriter(input)) {
-                new Gson().toJson(listaRank, writer);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-    }
+}
 

@@ -202,7 +202,7 @@ public class HOTELIERCustomerClient {
                         System.out.print("Inserisci la città: ");
                         String città = b.readLine();
 
-                        if (!checkHotel(nomeHotel, città.trim(), in, out)){
+                        if (!checkHotel(nomeHotel, (città.substring(0,1).toUpperCase()+città.substring(1)).trim(), in, out)){
                             System.out.println("\n"+redColor+"Hotel non trovato"+resetColor+"\n");
                             break;
                         }
@@ -220,7 +220,7 @@ public class HOTELIERCustomerClient {
                         double globalScore = Double.parseDouble(b.readLine());
                         System.out.println();
 
-                        insertReview(nomeHotel, città.trim(), globalScore, new Ratings(cleaning, position, services, quality), in,
+                        insertReview(nomeHotel, (città.substring(0,1).toUpperCase()+città.substring(1)).trim(), globalScore, new Ratings(cleaning, position, services, quality), in,
                                 out);
                         break;
                     }

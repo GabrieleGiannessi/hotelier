@@ -1,13 +1,10 @@
 package hotelier;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.lang.reflect.Type;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
@@ -16,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 //questo task implementa la sessione tra client e server
 public class Sessione implements Runnable {
@@ -25,18 +21,21 @@ public class Sessione implements Runnable {
     private MulticastSocket m; 
     private String group; 
     private int port; 
+    private JsonDB db; 
 
-    public Sessione(Socket s, MulticastSocket m, String group, int port) {
+    public Sessione(Socket s, MulticastSocket m, String group, int port, JsonDB db) {
         this.s = s;
         this.m = m; 
         this.group = group; 
         this.port = port; 
+        this.db = db; 
     }
 
     @Override
     public void run() {
 
         Utente user = null; //tengo traccia dell'utente che si autentica
+
         try (ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
                 ObjectInputStream in = new ObjectInputStream(s.getInputStream())) {
             
@@ -86,7 +85,7 @@ public class Sessione implements Runnable {
 
                         }
 
-                        List<Utente> listaUtenti = scanUtenti();
+                        List<Utente> listaUtenti = db.scanUtenti();
                         if (listaUtenti == null) {
                             // inizializzo la lista
                             listaUtenti = new ArrayList<Utente>();
@@ -165,7 +164,7 @@ public class Sessione implements Runnable {
 
                         //se la sintassi di username e password è corretta procediamo con i controlli successivi
                 
-                        List<Utente> listaUtenti = scanUtenti(); // prelevo la lista degli utenti dal file
+                        List<Utente> listaUtenti = db.scanUtenti(); // prelevo la lista degli utenti dal file
                         if (listaUtenti == null) {
                             out.writeInt(0); // operazione fallita
                             out.flush();
@@ -189,7 +188,7 @@ public class Sessione implements Runnable {
 
                         if (user != null && user.isLogged()) {
 
-                            saveUtente(user, in, out); //salvo il fatto che sia loggato
+                            db.saveUtente(user); //salvo il fatto che sia loggato
                             out.writeInt(1);
                             out.writeObject(user); // operazione riuscita: l'utente si è autenticato
                             out.flush();
@@ -209,7 +208,7 @@ public class Sessione implements Runnable {
                         }
 
                         user.setLogged(false);       
-                        saveUtente (user, in, out); //salvataggio dell'Utente nel file (Utenti.json)
+                        db.saveUtente(user); //salvataggio dell'Utente nel file (Utenti.json)
                         user = null; 
 
                         sendUDPmessage(m); //messaggio inviato per far terminare il task notifiche
@@ -221,7 +220,7 @@ public class Sessione implements Runnable {
 
                     case 4: // searchHotel
                     {
-                        List<Hotel> listaHotel = scanHotels();
+                        List<Hotel> listaHotel = db.scanHotels();
                         String nomeHotel = in.readUTF();
 
                         boolean f_nome = false;
@@ -269,7 +268,7 @@ public class Sessione implements Runnable {
 
                         if (f_nome && f_città) {
                             //calcolo il numero di recensioni associate all'Hotel
-                            List <Recensione> recensioni = scanRecensioni(); 
+                            List <Recensione> recensioni = db.scanRecensioni(); 
                             int c = 0; 
                             for (Recensione r : recensioni){
                                 if (r.getNomeHotel().equals(nomeHotel)) c++; 
@@ -285,7 +284,7 @@ public class Sessione implements Runnable {
 
                     case 5: // searchAllHotels
                     {
-                        List<LocalRank> listaRanks = scanLocalRankings();
+                        List<LocalRank> listaRanks = db.scanLocalRankings();
                         String città; // ricevo il nome della città ed effettuo la query
                         while ((città = in.readUTF()).isEmpty()) {
                         }
@@ -309,7 +308,7 @@ public class Sessione implements Runnable {
 
                             for (Hotel h : daStampare){
                                 //calcolo il numero di recensioni associate all'hotel h
-                                List <Recensione> recensioniHotel = scanRecensioni(); 
+                                List <Recensione> recensioniHotel = db.scanRecensioni(); 
                                 int c = 0;
                                 for (Recensione r: recensioniHotel){
                                     if (r.getNomeHotel().equals(h.getName())) c++; 
@@ -344,7 +343,7 @@ public class Sessione implements Runnable {
 
                         //gestione searchHotel : cerchiamo l'hotel che viene riferito dalla recensione, se lo troviamo facciamo compilare i voti, altrimenti segnaliamo errore
 
-                        List<Hotel> listaHotel = scanHotels();
+                        List<Hotel> listaHotel = db.scanHotels();
                         String nomeHotel = in.readUTF(); 
                         boolean f_nome = false;
 
@@ -395,7 +394,7 @@ public class Sessione implements Runnable {
                         }    
                       
                         Recensione review = (Recensione) in.readObject();
-                        List<Recensione> listaRecensioni = scanRecensioni(); 
+                        List<Recensione> listaRecensioni = db.scanRecensioni(); 
 
                         if (listaRecensioni == null){
                             listaRecensioni = new ArrayList<Recensione>();
@@ -472,12 +471,11 @@ public class Sessione implements Runnable {
                         if (user != null && user.isLogged()){
                             sendUDPmessage(m); //per terminare il thread notifiche nel client
                             user.setLogged(false); 
-                            saveUtente(user, in, out);
+                            db.saveUtente(user);
                             user = null;
-
                         } 
-
                         exit = true;
+                        System.out.println("Client disconnesso");
                         break;
                     }
                     default:
@@ -492,93 +490,6 @@ public class Sessione implements Runnable {
             System.err.println("Immetti un numero!");
             System.err.println(n.getMessage());
         }
-    }
-
-    // converte il file JSON degli hotel in una struttura dati (che implementa List)
-    // maneggevole
-    public synchronized static List<Hotel> scanHotels() {
-        String hotelPath = "Hotels.json";
-        List<Hotel> hotels = new ArrayList<Hotel>();// metterò gli hotel del file in questa struttura e la manderò in
-                                                    // output
-        try {
-            Type hotelListType = new TypeToken<List<Hotel>>() {
-            }.getType();
-            hotels = new Gson().fromJson(new FileReader(hotelPath), hotelListType); // hotel deserializzati
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        return hotels;
-    }
-
-    // converte il file JSON degli utenti in una struttura dati (che implementa
-    // List) maneggevole
-    public synchronized static List<Utente> scanUtenti() {
-        String UtentiPath = "Utenti.json";
-        List<Utente> utenti = new ArrayList<Utente>();
-        try {
-            Type utenteListType = new TypeToken<List<Utente>>() {
-            }.getType();
-            utenti = new Gson().fromJson(new FileReader(UtentiPath), utenteListType);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        return utenti;
-    }
-
-    // converte il file JSON delle recensioni in una struttura dati (che implementa
-    // List) maneggevole
-    public synchronized static List<Recensione> scanRecensioni() {
-        String recensioniPath = "Recensioni.json";
-        List<Recensione> recensioni = new ArrayList<Recensione>();
-        try {
-            Type recensioneListType = new TypeToken<List<Recensione>>() {
-            }.getType();
-            recensioni = new Gson().fromJson(new FileReader(recensioniPath), recensioneListType);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        return recensioni;
-    }
-
-    // converte il file JSON dei ranking in una struttura dati (che implementa
-    // List) maneggevole
-    public synchronized static List<LocalRank> scanLocalRankings(){
-        String rankingPath = "Rankings.json";    
-        List<LocalRank> localRankList = new ArrayList<LocalRank>();
-        try {
-            Type localRankListType = new TypeToken<List<LocalRank>>() {
-            }.getType();
-            localRankList = new Gson().fromJson(new FileReader(rankingPath), localRankListType);
-        } catch (FileNotFoundException e) {
-            System.err.println("I/O error while reading the file: " + rankingPath);
-            e.printStackTrace();
-        }
-        return localRankList;
-    }
-
-    //salva i dati dell'utente (identificato tramite l'oggetto) nel file utenti.json
-    public void saveUtente (Utente aggiornato, ObjectInputStream in, ObjectOutputStream out){
-        List<Utente> listaUtenti = scanUtenti(); 
-        if (listaUtenti !=  null){
-            for (int i = 0; i < listaUtenti.size(); i++){
-                Utente u = listaUtenti.get(i);
-                if (u.getUsername().equals(aggiornato.getUsername())){
-                    synchronized(this){
-                        listaUtenti.set(i, aggiornato);
-                    }
-                }
-            }
-            
-            //risalvo la lista
-        File inputUtenti = new File(
-                "Utenti.json");
-        try (FileWriter writer = new FileWriter(inputUtenti)) {
-            new Gson().toJson(listaUtenti, writer);
-        } catch (IOException e) {
-            e.printStackTrace();
-            }
-        }  
     }
 
     /**

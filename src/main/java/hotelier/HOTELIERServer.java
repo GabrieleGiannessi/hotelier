@@ -49,6 +49,7 @@ public class HOTELIERServer {
     private static int port; 
     private static String group;
     private static int numSecondi; 
+    private static JsonDB db = JsonDB.getInstance(); //database
 
     private static ExecutorService threadPool = new ThreadPoolExecutor(4, 4, 1, TimeUnit.SECONDS,
             new LinkedBlockingQueue<Runnable>());
@@ -70,9 +71,9 @@ public class HOTELIERServer {
 
         try (ServerSocket s = new ServerSocket(port); 
         MulticastSocket m = new MulticastSocket()) {
-        scheduler.scheduleAtFixedRate(new CalcoloRanking(m, group, port), 0, numSecondi, TimeUnit.SECONDS); //CalcoloRanking : task che si occupa di calcolare il ranking e inviare le notifiche
+        scheduler.scheduleAtFixedRate(new CalcoloRanking(m, group, port, db), 0, numSecondi, TimeUnit.SECONDS); //CalcoloRanking : task che si occupa di calcolare il ranking e inviare le notifiche
             while (true) { // rimane sempre attivo
-                threadPool.execute(new Sessione(s.accept(), m, group, port)); // threads con cui stabilisco la connessione con i client
+                threadPool.execute(new Sessione(s.accept(), m, group, port, db)); // threads con cui stabilisco la connessione con i client
                 System.out.println("Client connesso");
             }
         } catch (Exception e) {
