@@ -24,10 +24,10 @@ public class HOTELIERCustomerClient {
     private static String ipServer;
     private static String group;
     private static final ExecutorService e = Executors.newFixedThreadPool(1); //pool notifiche
-    private static String redColor = "\u001B[31m";
-    private static String greenColor = "\u001B[32m";
-    private static String lightBlueColor = "\u001B[94m";
-    private static String resetColor = "\u001B[0m";
+    private static String redColor;
+    private static String greenColor;
+    private static String lightBlueColor;
+    private static String resetColor;
     private static NotificheTask task = null; 
 
     public static void main(String[] args) {
@@ -287,6 +287,11 @@ public class HOTELIERCustomerClient {
         port = Integer.parseInt(prop.getProperty("port"));
         ipServer = prop.getProperty("ipServer"); 
         group = prop.getProperty("group"); 
+        redColor = prop.getProperty("redColor");
+        greenColor = prop.getProperty("greenColor");
+        lightBlueColor = prop.getProperty("lightBlueColor");
+        resetColor = prop.getProperty("resetColor");
+        
         in.close(); 
     }
 
@@ -568,7 +573,7 @@ public class HOTELIERCustomerClient {
          System.out.println(lightBlueColor+"  Qualità : "+resetColor+ratingsHotel.getQuality() +"");
          System.out.println(lightBlueColor+"  Servizi : "+resetColor+ratingsHotel.getServices() +"");
          System.out.println(lightBlueColor+"  Voto complessivo : "+resetColor+h.getRate() +"" );
-         System.out.println("");
+         System.out.println();
          System.out.println(lightBlueColor+"* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *"+resetColor);
          System.out.println();
     }

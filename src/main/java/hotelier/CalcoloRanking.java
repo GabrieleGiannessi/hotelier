@@ -284,10 +284,7 @@ public class CalcoloRanking implements Runnable {
         for (LocalRankHotel h : listaHotels){
             
             if (h.getH().getRate() >= res.getH().getRate()){
-                //if (h.getH().getRatings().getCleaning() > res.getH().getRatings().getCleaning() && h.getH().getRatings().getPosition() > res.getH().getRatings().getPosition() && 
-                //h.getH().getRatings().getQuality() > res.getH().getRatings().getQuality() && h.getH().getRatings().getServices() > res.getH().getRatings().getServices()){
-                    res = h; 
-                //}
+                    res = h;         
             }
         }
         

@@ -43,7 +43,13 @@ public class Sessione implements Runnable {
             boolean exit = false;
 
             while (!exit) {
-                int op = in.readInt();
+                int op=8;
+                try{
+                     op = in.readInt();
+                }catch (IOException e){
+                    System.err.println("Client disconnesso");
+                    exit = true; 
+                }
                 switch (op) {
                     case 1: // registrazione
                     {

@@ -1,20 +1,32 @@
 package hotelier;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.util.Properties;
 
 public class NotificheTask implements Runnable {
 
+    private static final String configFile = "client.properties"; 
+    private static String resetColor; 
+    private static String notifyColor; 
     private MulticastSocket m;
     public String group;
     public volatile boolean run = true;
-    public volatile boolean interrupted = false;
 
     public NotificheTask(MulticastSocket m, String group) {
         this.m = m;
         this.group = group;
+        try{
+            readConfig(); 
+        }catch (IOException e){
+            System.err.println("Errore durante la lettura del file di configurazione");
+            System.exit(0);
+        }    
     }
 
     @SuppressWarnings("deprecation")
@@ -38,11 +50,20 @@ public class NotificheTask implements Runnable {
                     break;
                 }
                     
-                System.out.println("[NOTIFICA] " + message);
+                System.out.println("\n"+notifyColor+"[NOTIFICA] " + message+resetColor+"\n");
 
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static void readConfig() throws FileNotFoundException, IOException {
+        InputStream in = new FileInputStream(configFile); 
+        Properties prop = new Properties(); 
+        prop.load(in); 
+        resetColor = prop.getProperty("resetColor"); 
+        notifyColor =  prop.getProperty("notifyColor"); 
+        in.close(); 
     }
 }
