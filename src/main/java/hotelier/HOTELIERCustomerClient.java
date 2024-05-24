@@ -8,7 +8,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.Socket;
 import java.util.Properties;
@@ -28,7 +27,7 @@ public class HOTELIERCustomerClient {
     private static String greenColor;
     private static String lightBlueColor;
     private static String resetColor;
-    private static NotificheTask task = null; 
+    //private static NotificheTask task = null; 
 
     public static void main(String[] args) {
 
@@ -48,6 +47,7 @@ public class HOTELIERCustomerClient {
             int scelta = 0;
             boolean exit = false;
             Thread cleanupTask = null; //thread usato per la funzione di cleanup
+            NotificheTask task = null;
            // NotificheTask sistemaNotifiche = null;
 
             System.out.println();
@@ -123,7 +123,7 @@ public class HOTELIERCustomerClient {
                             String pass = new String(passArray);
                             System.out.println();
     
-                                auth_user = login(new Utente(user, pass), in, out);
+                                auth_user = login(new Utente(user, pass), in, out, task);
                             
                             if (auth_user != null){
                                 System.out.println("\n"+greenColor+"Utente autenticato!"+resetColor+"\n");
@@ -147,7 +147,9 @@ public class HOTELIERCustomerClient {
                         if (res == 1){
                             auth_user = null; 
                             if (cleanupTask != null) Runtime.getRuntime().removeShutdownHook(cleanupTask); //tolgo la funzione di cleanup
-                            if (task != null) task = null; 
+                            if (task != null) {
+                               task = null;   
+                            } 
 
                             System.out.println("\n"+greenColor+"Logout effettuato con successo!"+resetColor+"\n");
                         }
@@ -352,8 +354,7 @@ public class HOTELIERCustomerClient {
      * @param out , stream che usiamo per comunicare con il server (instaura una sessione col client)
      */
 
-    @SuppressWarnings("deprecation")
-    public static Utente login(Utente u, ObjectInputStream in, ObjectOutputStream out) {
+    public static Utente login(Utente u, ObjectInputStream in, ObjectOutputStream out, NotificheTask task) {
         try {
             out.writeObject(u);
 
@@ -381,7 +382,6 @@ public class HOTELIERCustomerClient {
                     //autenticazione riuscita
                     Utente auth_user = (Utente) in.readObject(); 
                     MulticastSocket m = new MulticastSocket(port);
-                    m.joinGroup(InetAddress.getByName(group)); //mi iscrivo al gruppo multicast per ricevere le notifiche dal server
                     task = new NotificheTask(m, group);
                     e.execute(task); //faccio partire il task che attende le notifiche e le stampa
             

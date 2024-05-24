@@ -33,6 +33,8 @@ public class NotificheTask implements Runnable {
     @Override
     public void run() {
         try {
+            m.joinGroup(InetAddress.getByName(group)); //mi iscrivo al gruppo multicast per ricevere le notifiche dal server
+            
             byte[] buffer = new byte[1024];
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 

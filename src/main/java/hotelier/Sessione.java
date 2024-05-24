@@ -41,6 +41,12 @@ public class Sessione implements Runnable {
             
             boolean exit = false;
 
+            Runtime.getRuntime().addShutdownHook(new Thread(){
+                public void run(){
+                    System.out.println("Prova");
+                }
+            });
+
             while (!exit) {
                 int op=8;
                 try{
