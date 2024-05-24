@@ -127,7 +127,7 @@ public class HOTELIERCustomerClient {
                             
                             if (auth_user != null){
                                 System.out.println("\n"+greenColor+"Utente autenticato!"+resetColor+"\n");
-                                cleanupTask = new CleanupTask(auth_user);
+                                cleanupTask = new CleanupTask(auth_user, out);
                                 Runtime.getRuntime().addShutdownHook(cleanupTask);                     
                             }
 

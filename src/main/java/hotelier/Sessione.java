@@ -41,18 +41,12 @@ public class Sessione implements Runnable {
             
             boolean exit = false;
 
-            Runtime.getRuntime().addShutdownHook(new Thread(){
-                public void run(){
-                    System.out.println("Prova");
-                }
-            });
-
             while (!exit) {
-                int op=8;
+                int op=9;
                 try{
                      op = in.readInt();
                 }catch (IOException e){
-                    System.err.println("Client disconnesso");
+                    //interruzione da parte del client
                     exit = true; 
                 }
                 switch (op) {
@@ -291,9 +285,8 @@ public class Sessione implements Runnable {
                     case 5: // searchAllHotels
                     {
                         List<LocalRank> listaRanks = db.scanLocalRankings();
-                        String città; // ricevo il nome della città ed effettuo la query
-                        while ((città = in.readUTF()).isEmpty()) {
-                        }
+                        String città = in.readUTF(); // ricevo il nome della città ed effettuo la query
+                        
 
                         boolean presente = false;
                         List<Hotel> daStampare = new ArrayList<Hotel>();
@@ -436,6 +429,7 @@ public class Sessione implements Runnable {
                         if (user.getNumeroRecensioni() >= 20 && user.getNumeroRecensioni() < 50) user.setBadge("Contributore esperto");
                         if (user.getNumeroRecensioni() >= 50) user.setBadge("Contributore super");
 
+                        db.saveUtente(user); //inserisco i dati aggiornati
 
                         //re-inserisco la lista nel file
                         File input = new File("Recensioni.json");
@@ -484,6 +478,19 @@ public class Sessione implements Runnable {
                         System.out.println("Client disconnesso");
                         break;
                     }
+
+                    case 9: { //uscita speciale : il client ha richiesto la chiusura della connessione tramite interruzione (es : CTRL+C)
+                        if (user != null && user.isLogged()){
+                            //non invio nessun messaggio UDP in quanto il thread client è terminato (causerebbe broken pipe)
+                            user.setLogged(false); 
+                            db.saveUtente(user);
+                            user = null;
+                        }
+                        exit = true;
+                        System.out.println("Client disconnesso");
+                        break;
+                    }
+
                     default:
                         break;
                 }
