@@ -144,20 +144,20 @@ public class Sessione implements Runnable {
 
                         if (!checkUsername(inputUser.getUsername()) && !checkPassword(inputUser.getPassword())) {
                             out.writeInt(2); //errore sintassi credenziali utente
-                            out.writeUTF("Credenziali non corrette (Lo username deve contenere almeno 5 caratteri, e la password almeno 8)"); // mandiamo il badge
+                            out.writeUTF("Credenziali non corrette (Lo username deve contenere almeno 5 caratteri, e la password almeno 8)"); 
                             out.flush();
                             break;
                         }
                 
                         else if (!checkUsername(inputUser.getUsername())) {
                             out.writeInt(2); //errore sintassi credenziali utente
-                            out.writeUTF("Username non corretto (Lo username deve contenere almeno 5 caratteri)"); // mandiamo il badge
+                            out.writeUTF("Username non corretto (Lo username deve contenere almeno 5 caratteri)"); 
                             out.flush();    
                             break;
 
                         } else if (!checkPassword(inputUser.getPassword())) {
                             out.writeInt(2); //errore sintassi credenziali utente
-                            out.writeUTF("Password non corretta (La password deve contenere almeno 8 caratteri e non deve contenere spazi)"); // mandiamo il badge
+                            out.writeUTF("Password non corretta (La password deve contenere almeno 8 caratteri e non deve contenere spazi)"); 
                             out.flush();
                             break; 
                         }
@@ -223,6 +223,8 @@ public class Sessione implements Runnable {
                         List<Hotel> listaHotel = db.scanHotels();
                         String nomeHotel = in.readUTF();
 
+                        if (nomeHotel.length() == 0) break;
+
                         boolean f_nome = false;
 
                         // controllo nome
@@ -244,6 +246,14 @@ public class Sessione implements Runnable {
 
                         // controllo città
                         String città = in.readUTF();
+
+                        if (città == null){
+                            out.writeInt(2); //errore sintassi della stringa 
+                            out.writeUTF("Nome città vuoto"); // mandiamo il messaggio di errore
+                            out.flush();    
+                            break;
+                        }
+
                         boolean f_città = false;
                         Hotel searchedHotel = null;
 
@@ -286,8 +296,9 @@ public class Sessione implements Runnable {
                     {
                         List<LocalRank> listaRanks = db.scanLocalRankings();
                         String città = in.readUTF(); // ricevo il nome della città ed effettuo la query
-                        
 
+                        if (città.length() == 0) break;
+                        
                         boolean presente = false;
                         List<Hotel> daStampare = new ArrayList<Hotel>();
 
@@ -344,6 +355,13 @@ public class Sessione implements Runnable {
 
                         List<Hotel> listaHotel = db.scanHotels();
                         String nomeHotel = in.readUTF(); 
+
+                        if (nomeHotel.length() == 0) {
+                            //out.writeInt(0); // messaggio di errore 
+                            //out.flush();
+                            break;
+                        }
+
                         boolean f_nome = false;
 
                         // controllo nome
@@ -365,6 +383,13 @@ public class Sessione implements Runnable {
 
                         // controllo città
                         String città = in.readUTF();
+
+                        if (città.length() == 0) {
+                            //out.writeInt(0); // messaggio di errore 
+                            //out.flush();
+                            break;
+                        }
+
                         boolean f_città = false;
                         Hotel searchedHotel = null;
 
@@ -379,7 +404,7 @@ public class Sessione implements Runnable {
                         }
 
                         if (f_città) {
-                            out.writeInt(1);
+                            out.writeInt(1); //città trovata
                             out.flush();
                         } else {
                             out.writeInt(0); // messaggio di errore città
@@ -392,14 +417,20 @@ public class Sessione implements Runnable {
                             out.flush();
                         }    
                       
-                        Recensione review = (Recensione) in.readObject();
-                        List<Recensione> listaRecensioni = db.scanRecensioni(); 
+                        Recensione review = null; 
+                        try{
+                            review = (Recensione) in.readObject();
+                        }catch (IOException e){
+                            System.err.println("Errore durante il ricevimento della recensione");
+                        }
 
+                        if (review == null) break; 
+
+                        List<Recensione> listaRecensioni = db.scanRecensioni(); 
                         if (listaRecensioni == null){
                             listaRecensioni = new ArrayList<Recensione>();
                         }
 
-                        
                         boolean check = true; //controllo sui voti
 
                         //serie di controlli sui voti
@@ -430,16 +461,7 @@ public class Sessione implements Runnable {
                         if (user.getNumeroRecensioni() >= 50) user.setBadge("Contributore super");
 
                         db.saveUtente(user); //inserisco i dati aggiornati
-
-                        //re-inserisco la lista nel file
-                        File input = new File("Recensioni.json");
-                        try (FileWriter writer = new FileWriter(input)) {
-                            synchronized(this){
-                                new Gson().toJson(listaRecensioni, writer);
-                            }
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
+                        db.saveRecensioni(listaRecensioni); //re-inserisco la lista nel file
 
                         out.writeInt(1); //operazione conclusa
                         out.flush();
@@ -454,14 +476,11 @@ public class Sessione implements Runnable {
                             break;
                         }
 
-                        
+                        // mandiamo il badge
                         out.writeInt(1);
+                        out.writeUTF(user.getBadge()); 
                         out.flush();
 
-                        
-                        out.writeUTF(user.getBadge()); // mandiamo il badge
-                        out.writeUTF("");
-                        out.flush();
                         break;
                     }
 

@@ -117,7 +117,18 @@ public class JsonDB {
         }  
     }
 
-    public synchronized  void saveHotels (List<Hotel> listaHotels){
+    public synchronized void saveRecensioni (List<Recensione> listaRecensioni){
+        File input = new File("Recensioni.json");
+                        try (FileWriter writer = new FileWriter(input)) {
+                            synchronized(this){
+                                new Gson().toJson(listaRecensioni, writer);
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+    }
+
+    public synchronized void saveHotels (List<Hotel> listaHotels){
 
         File input = new File(
                 "Hotels.json");

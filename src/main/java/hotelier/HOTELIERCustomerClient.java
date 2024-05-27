@@ -167,14 +167,27 @@ public class HOTELIERCustomerClient {
                         System.out.print("Inserisci la città: ");
                         String città = b.readLine();
 
+                        if (nomeHotel.length() == 0){
+                            System.out.println("\n"+redColor+"Hotel non trovato"+resetColor+"\n");
+                            out.writeUTF(città); 
+                            out.flush();
+                            break;
+                        }
+
+                        if (città.length() == 0) {
+                            System.out.println("\n"+redColor+"Città non trovata"+resetColor+"\n");
+                            out.writeUTF(città); 
+                            out.flush();
+                            break; 
+                        }
+
                         Hotel daStampare = searchHotel(nomeHotel, (città.substring(0, 1).toUpperCase() + città.substring(1)).trim(), in, out);
                         if (daStampare != null) {
                             int numRecensioni = in.readInt(); 
                             System.out.println("\n"+greenColor+"Ho trovato le seguenti informazioni:"+resetColor+"\n");
                             visualizzaDettagliHotel(daStampare, numRecensioni);
-                        } else {
-                            System.out.println("\n"+redColor+"Hotel non trovato"+resetColor+"\n");
-                        }
+                        } 
+
                         break;
                     }
 
@@ -182,6 +195,13 @@ public class HOTELIERCustomerClient {
                     {
                         System.out.print("Inserisci la città: ");
                         String città = b.readLine();
+
+                        if (città.length() == 0) {
+                            System.out.println("\n"+redColor+"Città non trovata"+resetColor+"\n");
+                            out.writeUTF(città); 
+                            out.flush();
+                            break;
+                        }
 
                         searchAllHotels((città.substring(0, 1).toUpperCase() + città.substring(1)).trim(), in, out);
                         break;
@@ -203,6 +223,20 @@ public class HOTELIERCustomerClient {
                         String nomeHotel = b.readLine();
                         System.out.print("Inserisci la città: ");
                         String città = b.readLine();
+
+                        if (nomeHotel.length() == 0){
+                            System.out.println("\n"+redColor+"Hotel non trovato"+resetColor+"\n");
+                            out.writeUTF(città); 
+                            out.flush();
+                            break;
+                        }
+
+                        if (città.length() == 0) {
+                            System.out.println("\n"+redColor+"Città non trovata"+resetColor+"\n");
+                            out.writeUTF(città); 
+                            out.flush();
+                            break; 
+                        }
 
                         if (!checkHotel(nomeHotel, (città.substring(0,1).toUpperCase()+città.substring(1)).trim(), in, out)){
                             System.out.println("\n"+redColor+"Hotel non trovato"+resetColor+"\n");
@@ -242,7 +276,7 @@ public class HOTELIERCustomerClient {
                             System.out.println("Hai il seguente distintivo : " +greenColor+ badge +resetColor+ " \n");
                         } else {
                             System.out.println();
-                            System.out.println("\n"+redColor +"Non sei autenticato! Fai login"+ resetColor+"\n");
+                            System.out.println("\n"+redColor +"Non sei autenticato! Non puoi visualizzare il distintivo"+ resetColor+"\n");
                         }
 
                         break;
@@ -420,25 +454,59 @@ public class HOTELIERCustomerClient {
             while ((r1 = in.readInt()) == -1) {
             }
 
-            if (r1 == 1) {
-                // hotel presente nel file
-                out.writeUTF(città);
-                out.flush();
-
-                int r2 = -1;
-                while ((r2 = in.readInt()) == -1) {
+            switch (r1) {
+                case 0:{
+                    //hotel non trovato
+                    System.out.println("\n"+redColor+"Hotel non trovato!"+resetColor+"\n");
+                    return null;
                 }
+                case 1:{
+                    // hotel presente nel file, ora si controlla la città
+                    out.writeUTF(città);
+                    out.flush();
 
-                if (r2 == 1) {
-                    // hotel trovato : abbiamo controllato se l'hotel appartiene alla città mandata in input
-                    Object inObject;
-                    while ((inObject = in.readObject()) == null) {
+                    int r2 = -1;
+                    while ((r2 = in.readInt()) == -1) {
                     }
 
-                    if (inObject instanceof Hotel)
-                        res = (Hotel) inObject;
-                }else return null; 
-            }else return null; 
+                    switch (r2){
+                        case 0:{
+                            System.out.println("\n"+redColor+"Città non trovata!"+resetColor+"\n");
+                            return null;
+                        }
+                        case 1: {
+                            // hotel trovato : abbiamo controllato se l'hotel appartiene alla città mandata in input
+                        Object inObject;
+                        while ((inObject = in.readObject()) == null) {
+                        }
+
+                        if (inObject instanceof Hotel)
+                            res = (Hotel) inObject;
+                            break; 
+                        }
+                        case 2: {
+                            String mess;
+                            while ((mess =  in.readUTF()).isEmpty()){}
+
+                            System.out.println("\n"+redColor+mess+resetColor+"\n");
+                            return null;
+                        }
+                        default:break;
+                    }
+                }
+
+                case 2:{ //errore di sintassi nei campi
+                    String mess;
+                    while ((mess =  in.readUTF()).isEmpty()){}
+
+                    System.out.println("\n"+redColor+mess+resetColor+"\n");
+                    return null;
+                }
+                    
+                default:
+                    break;
+            }
+
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException c) {
@@ -459,25 +527,59 @@ public class HOTELIERCustomerClient {
             while ((r1 = in.readInt()) == -1) {
             }
 
-            if (r1 == 1) {
-                // hotel presente nel file
-                out.writeUTF(città);
-                out.flush();
-
-                int r2 = -1;
-                while ((r2 = in.readInt()) == -1) {
+            switch (r1) {
+                case 0:{
+                    //hotel non trovato
+                    System.out.println("\n"+redColor+"Hotel non trovato!"+resetColor+"\n");
+                    return false;
                 }
+                case 1:{
+                    // hotel presente nel file, ora si controlla la città
+                    out.writeUTF(città);
+                    out.flush();
 
-                if (r2 == 1) {
-                    // hotel trovato
-                    Object inObject;
-                    while ((inObject = in.readObject()) == null) {
+                    int r2 = -1;
+                    while ((r2 = in.readInt()) == -1) {
                     }
 
-                    if (inObject instanceof Hotel)
-                        res = true; 
+                    switch (r2){
+                        case 0:{
+                            System.out.println("\n"+redColor+"Città non trovata!"+resetColor+"\n");
+                            return false;
+                        }
+                        case 1: {
+                            // hotel trovato : abbiamo controllato se l'hotel appartiene alla città mandata in input
+                        Object inObject;
+                        while ((inObject = in.readObject()) == null) {
+                        }
+
+                        if (inObject instanceof Hotel)
+                            res = true;
+                            break; 
+                        }
+                        case 2: {
+                            String mess;
+                            while ((mess =  in.readUTF()).isEmpty()){}
+
+                            System.out.println("\n"+redColor+mess+resetColor+"\n");
+                            return false;
+                        }
+                        default:break;
+                    }
                 }
+
+                case 2:{ //errore di sintassi nei campi
+                    String mess;
+                    while ((mess =  in.readUTF()).isEmpty()){}
+
+                    System.out.println("\n"+redColor+mess+resetColor+"\n");
+                    return false;
+                }
+                    
+                default:
+                    break;
             }
+
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException c) {
@@ -496,22 +598,31 @@ public class HOTELIERCustomerClient {
             while ((res = in.readInt()) == -1) {
             } // wait
 
-            if (res == 1) {
-
-                System.out.println("\n"+greenColor+"Ho trovato i seguenti Hotel: "+resetColor+"\n");
-                
-                Hotel hotel;
-
-                while ((hotel = (Hotel) in.readObject()) != null){ 
-                    int numRecensioni = in.readInt();
-                    visualizzaDettagliHotel(hotel, numRecensioni);  
+            switch (res){
+                case 0: {
+                    System.out.println("\n"+redColor+"Non sono stati trovati hotel per la determinata città"+resetColor+"\n");
+                    System.out.println();
+                    break; 
                 }
-
-            } else {
-                System.out.println("\n"+redColor+"Non sono stati trovati hotel per la determinata città"+resetColor+"\n");
-                System.out.println();
-            }        
+                case 1: {
+                    System.out.println("\n"+greenColor+"Ho trovato i seguenti Hotel: "+resetColor+"\n");
                 
+                    Hotel hotel;
+    
+                    while ((hotel = (Hotel) in.readObject()) != null){ 
+                        int numRecensioni = in.readInt();
+                        visualizzaDettagliHotel(hotel, numRecensioni);  
+                    }
+                    break; 
+                }
+                case 2: {
+                    //errore di sintassi nei campi
+                    String mess;
+                    while ((mess =  in.readUTF()).isEmpty()){}
+                    System.out.println("\n"+redColor+mess+resetColor+"\n");
+                    break; 
+                }
+            }                      
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException ce) {
@@ -539,9 +650,23 @@ public class HOTELIERCustomerClient {
             int res = -1; 
             while ((res = in.readInt()) == -1){}
 
-            if (res == 1) System.out.println("\n"+greenColor+"Recensione effettuata!"+resetColor+"\n");
-            else System.out.println("\n"+redColor+"Errore ! Controlla di aver inserito bene i voti"+resetColor+"\n");
-
+            switch (res){
+                case 0:{
+                    System.out.println("\n"+redColor+"Errore ! Controlla di aver inserito bene i voti"+resetColor+"\n");
+                    break;
+                }
+                case 1:{
+                    System.out.println("\n"+greenColor+"Recensione effettuata!"+resetColor+"\n");
+                    break;
+                }
+                case 2:{
+                    //errore di sintassi nei campi
+                    String mess;
+                    while ((mess =  in.readUTF()).isEmpty()){}
+                    System.out.println("\n"+redColor+mess+resetColor+"\n");
+                    break; 
+                }
+            }
         }catch (IOException e){
             e.printStackTrace();
         }    
@@ -565,7 +690,6 @@ public class HOTELIERCustomerClient {
         }
         }
          
-
          System.out.println();  
          System.out.println("  VOTI HOTEL ("+numRecensioni+" recensioni)");
          System.out.println(lightBlueColor+"  Pulizia : "+resetColor+ratingsHotel.getCleaning() +"");
