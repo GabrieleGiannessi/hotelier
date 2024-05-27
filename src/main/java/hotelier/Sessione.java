@@ -221,7 +221,8 @@ public class Sessione implements Runnable {
                     case 4: // searchHotel
                     {
                         List<Hotel> listaHotel = db.scanHotels();
-                        String nomeHotel = in.readUTF();
+                        String nomeHotel;
+                        while ((nomeHotel = in.readUTF()).isEmpty()){} 
 
                         if (nomeHotel.length() == 0) break;
 
@@ -245,14 +246,11 @@ public class Sessione implements Runnable {
                         }
 
                         // controllo città
-                        String città = in.readUTF();
-
-                        if (città == null){
-                            out.writeInt(2); //errore sintassi della stringa 
-                            out.writeUTF("Nome città vuoto"); // mandiamo il messaggio di errore
-                            out.flush();    
-                            break;
-                        }
+                        String città;
+                        while ((città = in.readUTF()).isEmpty()){} 
+                        
+                        if (città.length() == 0) break;
+                        
 
                         boolean f_città = false;
                         Hotel searchedHotel = null;
@@ -295,7 +293,8 @@ public class Sessione implements Runnable {
                     case 5: // searchAllHotels
                     {
                         List<LocalRank> listaRanks = db.scanLocalRankings();
-                        String città = in.readUTF(); // ricevo il nome della città ed effettuo la query
+                        String città; // ricevo il nome della città ed effettuo la query
+                        while ((città = in.readUTF()).isEmpty()){}
 
                         if (città.length() == 0) break;
                         
@@ -354,11 +353,10 @@ public class Sessione implements Runnable {
                         //gestione searchHotel : cerchiamo l'hotel che viene riferito dalla recensione, se lo troviamo facciamo compilare i voti, altrimenti segnaliamo errore
 
                         List<Hotel> listaHotel = db.scanHotels();
-                        String nomeHotel = in.readUTF(); 
+                        String nomeHotel; 
+                        while ((nomeHotel = in.readUTF()).isEmpty()){}
 
                         if (nomeHotel.length() == 0) {
-                            //out.writeInt(0); // messaggio di errore 
-                            //out.flush();
                             break;
                         }
 
@@ -373,7 +371,7 @@ public class Sessione implements Runnable {
                         }
 
                         if (f_nome) {
-                            out.writeInt(1);
+                            out.writeInt(1); //hotel trovato
                             out.flush();
                         } else {
                             out.writeInt(0); // messaggio di errore nomeHotel
@@ -506,6 +504,7 @@ public class Sessione implements Runnable {
                             user = null;
                         }
                         exit = true;
+
                         System.out.println("Client disconnesso");
                         break;
                     }

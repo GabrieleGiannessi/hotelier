@@ -153,8 +153,8 @@ public class JsonDB {
     public List<String> getAllCities (){
         List <String> res = new ArrayList<String>(); 
             List<Hotel> listaHotels = instance != null ? instance.scanHotels() : null; 
-
             if (listaHotels == null) return null; 
+            
             for (Hotel h : listaHotels){
                 if (!res.contains(h.getCity())){
                     res.add(h.getCity());

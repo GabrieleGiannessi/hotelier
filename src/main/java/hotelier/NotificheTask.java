@@ -52,7 +52,7 @@ public class NotificheTask implements Runnable {
                     break;
                 }
                     
-                System.out.println("\n"+notifyColor+"[NOTIFICA] " + message+resetColor+"\n");
+                System.out.println("\n\n"+notifyColor+"[NOTIFICA] " + message+resetColor+"\n");
 
             }
         } catch (IOException e) {

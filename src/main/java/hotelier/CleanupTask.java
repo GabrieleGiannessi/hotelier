@@ -43,14 +43,9 @@ public class CleanupTask extends Thread{
                     System.err.println("Errore durante invio codice di cleanup alla sessione");
                     e.printStackTrace(); 
                 }
-                    
-                    
-                System.out.println();
-                System.out.println("Informazioni salvate!");
-                
-                    //u.setLogged(false); //logout forzato
-                    //saveUtente(u);
-                    //System.out.println();
+
+                    System.out.println();
+                    System.out.println("Informazioni salvate!");          
                 }  
-    }
+        }
 }
