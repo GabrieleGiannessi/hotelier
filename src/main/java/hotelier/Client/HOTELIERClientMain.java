@@ -656,26 +656,26 @@ public class HOTELIERClientMain{
         }
     }
 
+    
     /**
-     * Funzione usata per memorizzare la Recensione dentro il file json (Recensioni.json).
-     * 
-     * @param reviewHotel  , Hotel per il quale sto facendo la recensione
-     * @param globalScore  , score globale (complessivo)
-     * @param singleScores , voti riguardanti le singole categorie (pulizia,
-     *                     servizi, posizione e qualità)
+     * Funzione attraverso il quale andiamo ad inserire la recensione nel sistema, andando ad inviare alla sessione la recensione, la quale farà gli opportuni controlli inviandoci un messaggio di ritorno
+     * e opportunamente inserendo la recensione all'interno del db.
+     * @param nomeHotel
+     * @param città
+     * @param globalScore
+     * @param singleScores
+     * @param in
+     * @param out
      */
     public static void insertReview(String nomeHotel, String città, double globalScore, Ratings singleScores, ObjectInputStream in,
             ObjectOutputStream out) {
                 
         // procediamo con l'inserimento della Recensione: incapsuliamo in un oggetto Recensione e mandiamola alla sessione, che farà gli opportuni controlli sulla struttura
-        Recensione r = new Recensione(nomeHotel, città, singleScores, globalScore);
         try{
-            out.writeObject(new ReviewClientMessage(r));
+            out.writeObject(new ReviewClientMessage(new Recensione(nomeHotel, città, singleScores, globalScore)));
             out.flush();
 
-            ServerMessage res = null; 
-
-            while ((res = (ServerMessage) in.readObject()) == null){}
+            ServerMessage res = (ServerMessage) in.readObject(); 
 
             if (res instanceof ControlServerMessage){
                 ControlServerMessage cod = (ControlServerMessage) res; 

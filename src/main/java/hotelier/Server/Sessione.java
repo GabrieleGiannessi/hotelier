@@ -508,12 +508,10 @@ public class Sessione implements Runnable {
                                     if (città.length() == 0) break;
                                     
                                     boolean f_città = false;
-                                    Hotel searchedHotel = null;
             
                                     for (Hotel h : listaHotel) {
                                         if (h.getName().equals(nomeHotel)) {
                                             if (h.getCity().equals(città)) {
-                                                searchedHotel = h;
                                                 f_città = true;
                                                 break;
                                             }
@@ -527,12 +525,7 @@ public class Sessione implements Runnable {
                                         out.writeObject(new ControlServerMessage(0)); // messaggio di errore città
                                         out.flush();
                                         break; 
-                                    }
-            
-                                    if (f_nome && f_città) {
-                                        out.writeObject(new HotelServerMessage(searchedHotel));
-                                        out.flush();
-                                    }   
+                                    }  
                                     
                                     ClientMessage reviewmess = null; 
                                     while ((reviewmess = (ClientMessage) in.readObject()) == null){}
