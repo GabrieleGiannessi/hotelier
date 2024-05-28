@@ -49,7 +49,7 @@
                     <execution>
                           <id>server</id> 
                           <configuration>
-                            <mainClass>hotelier.HOTELIERServer</mainClass>
+                            <mainClass>hotelier.Server.HOTELIERServerMain</mainClass>
                           </configuration>
                     </execution>
 
@@ -57,7 +57,7 @@
                     <execution>
                           <id>client</id> 
                           <configuration>
-                            <mainClass>hotelier.HOTELIERCustomerClient</mainClass>
+                            <mainClass>hotelier.Client.HOTELIERClientMain</mainClass>
                           </configuration>
                     </execution>
 
