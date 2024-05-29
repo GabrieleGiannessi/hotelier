@@ -50,7 +50,10 @@ public class HOTELIERClientMain{
 
             int scelta = 0;
             boolean exit = false;
-            Thread cleanupTask = null; //thread usato per la funzione di cleanup
+
+            Thread cleanupTask = new CleanupTask(auth_user, out); //thread usato per la funzione di cleanup
+            Runtime.getRuntime().addShutdownHook(cleanupTask);
+
             NotificheTask task = null; //thread notifiche
 
             System.out.println();
@@ -80,7 +83,14 @@ public class HOTELIERClientMain{
                 System.out.println("8) Esci ");
 
                 System.out.print("\nScelta: ");
-                scelta = Integer.parseInt(b.readLine());
+                String line = b.readLine(); 
+
+                if (!line.matches("\\d+")){
+                    System.out.println("\n"+redColor+"Immetti un numero!"+resetColor+"\n");
+                    continue; 
+                }
+
+                scelta = Integer.parseInt(line);
                 System.out.println();
 
                 out.writeObject(new ControlClientMessage(scelta)); // incapsulo la scelta  che ha fatto il client in un messaggio di controllo e lo mando alla sessione, che la gestisce a
@@ -132,10 +142,10 @@ public class HOTELIERClientMain{
                                 auth_user = login(new Utente(user, pass), in, out, task);
                             
                             if (auth_user != null){
-
-                                System.out.println("\n"+greenColor+"Utente autenticato!"+resetColor+"\n");
-                                cleanupTask = new CleanupTask(auth_user, out);
-                                Runtime.getRuntime().addShutdownHook(cleanupTask);                     
+                                System.out.println("\n"+greenColor+"Utente autenticato!"+resetColor+"\n");  
+                                Runtime.getRuntime().removeShutdownHook(cleanupTask);
+                                cleanupTask = new CleanupTask(auth_user, out); 
+                                Runtime.getRuntime().addShutdownHook(cleanupTask);                                   
                             }
 
                         } else {
@@ -156,7 +166,10 @@ public class HOTELIERClientMain{
                             ControlServerMessage serverMessage = (ControlServerMessage) res; 
                             if (serverMessage.getCod() == 1){
                                 auth_user = null; 
-                                if (cleanupTask != null) Runtime.getRuntime().removeShutdownHook(cleanupTask); //tolgo la funzione di cleanup
+                                
+                                Runtime.getRuntime().removeShutdownHook(cleanupTask);
+                                cleanupTask = new CleanupTask(auth_user, out); 
+                                Runtime.getRuntime().addShutdownHook(cleanupTask);  
 
                                 if (task != null) {
                                     task = null;   

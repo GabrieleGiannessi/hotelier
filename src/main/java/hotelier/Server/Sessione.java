@@ -72,6 +72,15 @@ public class Sessione implements Runnable {
     
                             // ricevo l'utente in input
                             ClientMessage mess = (ClientMessage) in.readObject();
+
+                            if (mess instanceof ControlClientMessage){
+                                ControlClientMessage cod = (ControlClientMessage) mess; 
+                                if (cod.getCod() == 9){
+                                    exit = true;
+                                    System.out.println("Client disconnesso");
+                                    break;
+                                }
+                            }
     
                             if (mess instanceof UserClientMessage){
                             UserClientMessage utente =(UserClientMessage) mess; 
@@ -154,63 +163,77 @@ public class Sessione implements Runnable {
                                 out.flush();
                             }
     
-                            UserClientMessage clientMessage = (UserClientMessage) in.readObject(); // ricevo l'utente in input
-                            Utente inputUser = clientMessage.getUser(); 
-    
-                            if (!checkUsername(inputUser.getUsername()) && !checkPassword(inputUser.getPassword())) {
-                                out.writeObject(new ControlServerMessage(2)); //errore sintassi credenziali utente
-                                out.writeObject(new StringServerMessage("Credenziali non corrette (Lo username deve contenere almeno 5 caratteri, e la password almeno 8)")); 
-                                out.flush();
-                                break;
+                            ClientMessage clientMessage = (ClientMessage) in.readObject(); // ricevo l'utente in input
+
+                            if (clientMessage instanceof ControlClientMessage){
+                                ControlClientMessage cod = (ControlClientMessage) clientMessage; 
+                                if (cod.getCod() == 9){
+                                    exit = true;
+                                    System.out.println("Client disconnesso");
+                                    break;
+                                }
                             }
-                    
-                            else if (!checkUsername(inputUser.getUsername())) {
-                                out.writeObject(new ControlServerMessage(2)); //errore sintassi credenziali utente
-                                out.writeObject(new StringServerMessage("Username non corretto (Lo username deve contenere almeno 5 caratteri)"));
-                                out.flush();    
-                                break;
-    
-                            } else if (!checkPassword(inputUser.getPassword())) {
-                                out.writeObject(new ControlServerMessage(2)); //errore sintassi credenziali utente
-                                out.writeObject(new StringServerMessage("Password non corretta (La password deve contenere almeno 8 caratteri e non deve contenere spazi)"));
-                                out.flush();
-                                break; 
-                            }
-    
-                            //se la sintassi di username e password è corretta procediamo con i controlli successivi
-                    
-                            List<Utente> listaUtenti = db.scanUtenti(); // prelevo la lista degli utenti dal file
-                            if (listaUtenti == null) {
-                                out.writeObject(new ControlServerMessage(0)); // operazione fallita
-                                out.flush();
-                                break;
-                            }
-    
-                            for (Utente u : listaUtenti) {
-                                if (u.getUsername().equals(inputUser.getUsername())) {
-                                    if (u.getPassword().equals(inputUser.getPassword())) {
-                                        // l'utente si è autenticato
-                                        if (!u.isLogged()){
-                                        user = u;
-                                        user.setLogged(true);
-                                        break;
-                                        }
-                                        
-                                    } else
-                                        break; // altrimenti password errata
+
+                            if (clientMessage instanceof UserClientMessage){
+                                UserClientMessage userMessage = (UserClientMessage) clientMessage; 
+                                Utente inputUser = userMessage.getUser(); 
+
+                                if (!checkUsername(inputUser.getUsername()) && !checkPassword(inputUser.getPassword())) {
+                                    out.writeObject(new ControlServerMessage(2)); //errore sintassi credenziali utente
+                                    out.writeObject(new StringServerMessage("Credenziali non corrette (Lo username deve contenere almeno 5 caratteri, e la password almeno 8)")); 
+                                    out.flush();
+                                    break;
+                                }
+                        
+                                else if (!checkUsername(inputUser.getUsername())) {
+                                    out.writeObject(new ControlServerMessage(2)); //errore sintassi credenziali utente
+                                    out.writeObject(new StringServerMessage("Username non corretto (Lo username deve contenere almeno 5 caratteri)"));
+                                    out.flush();    
+                                    break;
+        
+                                } else if (!checkPassword(inputUser.getPassword())) {
+                                    out.writeObject(new ControlServerMessage(2)); //errore sintassi credenziali utente
+                                    out.writeObject(new StringServerMessage("Password non corretta (La password deve contenere almeno 8 caratteri e non deve contenere spazi)"));
+                                    out.flush();
+                                    break; 
+                                }
+        
+                                //se la sintassi di username e password è corretta procediamo con i controlli successivi
+                        
+                                List<Utente> listaUtenti = db.scanUtenti(); // prelevo la lista degli utenti dal file
+                                if (listaUtenti == null) {
+                                    out.writeObject(new ControlServerMessage(0)); // operazione fallita
+                                    out.flush();
+                                    break;
+                                }
+        
+                                for (Utente u : listaUtenti) {
+                                    if (u.getUsername().equals(inputUser.getUsername())) {
+                                        if (u.getPassword().equals(inputUser.getPassword())) {
+                                            // l'utente si è autenticato
+                                            if (!u.isLogged()){
+                                            user = u;
+                                            user.setLogged(true);
+                                            break;
+                                            }
+                                            
+                                        } else
+                                            break; // altrimenti password errata
+                                    }
+                                }
+        
+                                if (user != null && user.isLogged()) {
+        
+                                    db.saveUtente(user); //salvo il fatto che sia loggato
+                                    out.writeObject(new ControlServerMessage(1));
+                                    out.writeObject(new UserServerMessage(user)); // operazione riuscita: l'utente si è autenticato
+                                    out.flush();
+                                } else {
+                                    out.writeObject(new ControlServerMessage(0)); // operazione fallita
+                                    out.flush();
                                 }
                             }
     
-                            if (user != null && user.isLogged()) {
-    
-                                db.saveUtente(user); //salvo il fatto che sia loggato
-                                out.writeObject(new ControlServerMessage(1));
-                                out.writeObject(new UserServerMessage(user)); // operazione riuscita: l'utente si è autenticato
-                                out.flush();
-                            } else {
-                                out.writeObject(new ControlServerMessage(0)); // operazione fallita
-                                out.flush();
-                            }
                             break;
                         }
     

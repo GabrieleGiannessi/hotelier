@@ -37,6 +37,9 @@ public class CleanupTask extends Thread{
                 System.out.print(". ");
 
             }
+            System.out.println();
+            System.out.println("Informazioni salvate!");          
+        }  
 
                 //mando alla sessione un codice di uscita speciale (in quanto bisogna salvare i dati dell'utente e settare il logout forzato)
                 try{
@@ -46,9 +49,5 @@ public class CleanupTask extends Thread{
                     System.err.println("Errore durante invio codice di cleanup alla sessione");
                     e.printStackTrace(); 
                 }
-
-                    System.out.println();
-                    System.out.println("Informazioni salvate!");          
-                }  
         }
 }
