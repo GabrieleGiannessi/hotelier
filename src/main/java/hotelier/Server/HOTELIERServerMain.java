@@ -23,7 +23,7 @@ public class HOTELIERServerMain {
     private static int numSecondi; 
     private static JsonDB db = JsonDB.getInstance(); //database
 
-    private static ExecutorService threadPool = new ThreadPoolExecutor(4, 4, 1, TimeUnit.SECONDS,
+    private static ExecutorService threadPool = new ThreadPoolExecutor(4, 10, 1, TimeUnit.SECONDS,
             new LinkedBlockingQueue<Runnable>());
     private static ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(); //questo pool viene usato per eseguire il thread che calcola il ranking 
 

@@ -54,7 +54,7 @@ public class HOTELIERClientMain{
             Thread cleanupTask = new CleanupTask(auth_user, out); //thread usato per la funzione di cleanup
             Runtime.getRuntime().addShutdownHook(cleanupTask);
 
-            NotificheTask task = null; //thread notifiche
+            NotifyTask task = null; //thread notifiche
 
             System.out.println();
             System.out.println();
@@ -166,7 +166,7 @@ public class HOTELIERClientMain{
                             ControlServerMessage serverMessage = (ControlServerMessage) res; 
                             if (serverMessage.getCod() == 1){
                                 auth_user = null; 
-                                
+
                                 Runtime.getRuntime().removeShutdownHook(cleanupTask);
                                 cleanupTask = new CleanupTask(auth_user, out); 
                                 Runtime.getRuntime().addShutdownHook(cleanupTask);  
@@ -436,7 +436,7 @@ public class HOTELIERClientMain{
      * @param out , stream che usiamo per comunicare con il server (instaura una sessione col client)
      */
 
-    public static Utente login(Utente u, ObjectInputStream in, ObjectOutputStream out, NotificheTask task) {
+    public static Utente login(Utente u, ObjectInputStream in, ObjectOutputStream out, NotifyTask task) {
         try {
 
             out.writeObject(new UserClientMessage(u));
@@ -467,7 +467,7 @@ public class HOTELIERClientMain{
                     case 1: {
                         UserServerMessage userMessage = (UserServerMessage) in.readObject(); 
                         MulticastSocket m = new MulticastSocket(port);
-                        task = new NotificheTask(m, group);
+                        task = new NotifyTask(m, group);
                         e.execute(task); //faccio partire il task che attende le notifiche e le stampa
                         return userMessage.getUser();   
                     }

@@ -9,7 +9,7 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.Properties;
 
-public class NotificheTask implements Runnable {
+public class NotifyTask implements Runnable {
 
     private static final String configFile = "client.properties"; 
     private static String resetColor; 
@@ -18,7 +18,7 @@ public class NotificheTask implements Runnable {
     public String group;
     public volatile boolean run = true;
 
-    public NotificheTask(MulticastSocket m, String group) {
+    public NotifyTask(MulticastSocket m, String group) {
         this.m = m;
         this.group = group;
         try{

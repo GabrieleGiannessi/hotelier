@@ -1,6 +1,5 @@
 /home/gabriele/java-projects/hotelier/src/main/java/hotelier/Messages/ServerMessages/ServerMessage.java
 /home/gabriele/java-projects/hotelier/src/main/java/hotelier/Structures/Ratings.java
-/home/gabriele/java-projects/hotelier/src/main/java/hotelier/Client/NotificheTask.java
 /home/gabriele/java-projects/hotelier/src/main/java/hotelier/Structures/Recensione.java
 /home/gabriele/java-projects/hotelier/src/main/java/hotelier/Structures/Utente.java
 /home/gabriele/java-projects/hotelier/src/main/java/hotelier/Server/CalcoloRanking.java
@@ -16,6 +15,7 @@
 /home/gabriele/java-projects/hotelier/src/main/java/hotelier/Structures/Hotel.java
 /home/gabriele/java-projects/hotelier/src/main/java/hotelier/Messages/ServerMessages/StringServerMessage.java
 /home/gabriele/java-projects/hotelier/src/main/java/hotelier/Structures/LocalRank.java
+/home/gabriele/java-projects/hotelier/src/main/java/hotelier/Client/NotifyTask.java
 /home/gabriele/java-projects/hotelier/src/main/java/hotelier/Server/HOTELIERServerMain.java
 /home/gabriele/java-projects/hotelier/src/main/java/hotelier/Client/HOTELIERClientMain.java
 /home/gabriele/java-projects/hotelier/src/main/java/hotelier/Messages/ClientMessages/ReviewClientMessage.java
