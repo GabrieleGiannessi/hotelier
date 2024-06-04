@@ -15,6 +15,8 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.Socket;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -129,6 +131,25 @@ public class Sessione implements Runnable {
                                 }
                             }
     
+                            //prima di inserire l'utente nel db devo convertire la password in chiaro in una password cifrata (usando un algoritmo di cifratura: uso message digest MD5 che genera una stringa di 16 caratteri)
+                            String encryptedPassword = null; 
+                            try {
+                                MessageDigest m = MessageDigest.getInstance("MD5");
+                                m.update(utente.getUser().getPassword().getBytes());
+                                byte[] bytes = m.digest();  
+                                StringBuilder s = new StringBuilder();  
+                                for(int i=0; i< bytes.length ;i++)  //conversione dei byte nell'array in versione esadecimale
+                                {  
+                                    s.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));  
+                                }
+
+                                encryptedPassword = s.toString();
+                                utente.getUser().setPassword(encryptedPassword); //setto la pass cifrata
+
+                            } catch (NoSuchAlgorithmException e) {
+                                e.printStackTrace();
+                            }
+
                             // inserisco l'utente nel file json
                             listaUtenti.add(utente.getUser()); // inserisco l'utente
     
@@ -206,6 +227,24 @@ public class Sessione implements Runnable {
                                     out.flush();
                                     break;
                                 }
+
+                                String encryptedPassword = null; 
+                            try {
+                                MessageDigest m = MessageDigest.getInstance("MD5");
+                                m.update(inputUser.getPassword().getBytes());
+                                byte[] bytes = m.digest();  
+                                StringBuilder s = new StringBuilder();  
+                                for(int i=0; i< bytes.length ;i++)  //conversione dei byte nell'array in versione esadecimale
+                                {  
+                                    s.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));  
+                                }
+
+                                encryptedPassword = s.toString();
+                                inputUser.setPassword(encryptedPassword); //setto la pass cifrata
+
+                            } catch (NoSuchAlgorithmException e) {
+                                e.printStackTrace();
+                            }
         
                                 for (Utente u : listaUtenti) {
                                     if (u.getUsername().equals(inputUser.getUsername())) {
