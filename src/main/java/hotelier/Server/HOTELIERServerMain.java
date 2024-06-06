@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 
 public class HOTELIERServerMain {
 
-    private static final String configFile = "server.properties"; 
+    private static final String configFile = "./src/main/resources/server.properties"; 
     private static int port; 
     private static String group;
     private static int numSecondi; 

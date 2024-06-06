@@ -33,7 +33,7 @@ public class JsonDB {
     // converte il file JSON degli hotel in una struttura dati (che implementa List)
     // maneggevole
     public synchronized List<Hotel> scanHotels() {
-        String hotelPath = "Hotels.json";
+        String hotelPath = "./src/main/resources/Hotels.json";
         List<Hotel> hotels = new ArrayList<Hotel>();// metterò gli hotel del file in questa struttura e la manderò in
                                                     // output
         try {
@@ -51,7 +51,7 @@ public class JsonDB {
     // converte il file JSON degli utenti in una struttura dati (che implementa
     // List) maneggevole
     public synchronized List<Utente> scanUtenti() {
-        String UtentiPath = "Utenti.json";
+        String UtentiPath = "./src/main/resources/Utenti.json";
         List<Utente> utenti = new ArrayList<Utente>();
         try {
             Type utenteListType = new TypeToken<List<Utente>>() {
@@ -67,7 +67,7 @@ public class JsonDB {
     // converte il file JSON delle recensioni in una struttura dati (che implementa
     // List) maneggevole
     public synchronized List<Recensione> scanRecensioni() {
-        String recensioniPath = "Recensioni.json";
+        String recensioniPath = "./src/main/resources/Recensioni.json";
         List<Recensione> recensioni = new ArrayList<Recensione>();
         try {
             Type recensioneListType = new TypeToken<List<Recensione>>() {
@@ -85,7 +85,7 @@ public class JsonDB {
      * @return LocalRankList, Lista che contiene i rank locali per ogni città
      */
     public synchronized List<LocalRank> scanLocalRankings(){
-        String rankingPath = "Rankings.json";    
+        String rankingPath = "./src/main/resources/Rankings.json";    
         List<LocalRank> localRankList = new ArrayList<LocalRank>();
         try {
             Type localRankListType = new TypeToken<List<LocalRank>>() {
@@ -112,12 +112,8 @@ public class JsonDB {
             }
             
             //risalvo la lista
-        File inputUtenti = new File(
-                "Utenti.json");
-        try (FileWriter writer = new FileWriter(inputUtenti)) {
-            new Gson().toJson(listaUtenti, writer);
-        } catch (IOException e) {
-            e.printStackTrace();
+            if (instance != null){
+                instance.saveUtenti(listaUtenti); 
             }
         }  
     }
@@ -126,7 +122,7 @@ public class JsonDB {
      * Funzione che salva e sovrascrive nel file JSON la lista delle recensioni passata per parametro. 
      */
     public synchronized void saveRecensioni (List<Recensione> listaRecensioni){
-        File input = new File("Recensioni.json");
+        File input = new File("./src/main/resources/Recensioni.json");
                         try (FileWriter writer = new FileWriter(input)) {
                             synchronized(this){
                                 new Gson().toJson(listaRecensioni, writer);
@@ -142,7 +138,7 @@ public class JsonDB {
     public synchronized void saveHotels (List<Hotel> listaHotels){
 
         File input = new File(
-                "Hotels.json");
+                "./src/main/resources/Hotels.json");
         try (FileWriter writer = new FileWriter(input)) {
             new Gson().toJson(listaHotels, writer);
         } catch (IOException e) {
@@ -155,7 +151,7 @@ public class JsonDB {
      */
     public synchronized  void saveRankings (List <LocalRank> listaRank){
         File input = new File(
-            "Rankings.json");
+            "./src/main/resources/Rankings.json");
             try (FileWriter writer = new FileWriter(input)) {
                 new Gson().toJson(listaRank, writer);
             } catch (IOException e) {
@@ -177,8 +173,16 @@ public class JsonDB {
                     res.add(h.getCity());
                 }
             }
-    
             return res; 
         }
 
+    public synchronized void saveUtenti (List<Utente> utenti){
+        File inputUtenti = new File(
+                "./src/main/resources/Utenti.json");
+        try (FileWriter writer = new FileWriter(inputUtenti)) {
+            new Gson().toJson(utenti, writer);
+        } catch (IOException e) {
+            e.printStackTrace();
+            }
+    }
 }

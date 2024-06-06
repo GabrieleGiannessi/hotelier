@@ -16,7 +16,7 @@ import java.util.Properties;
 
 public class NotifyTask implements Runnable {
 
-    private static final String configFile = "client.properties"; 
+    private static final String configFile = "./src/main/resources/client.properties"; 
     private static String resetColor; 
     private static String notifyColor; 
     private MulticastSocket m;

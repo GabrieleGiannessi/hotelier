@@ -1,13 +1,9 @@
 package hotelier.Server;
 
-import com.google.gson.Gson;
-
 import hotelier.Messages.ClientMessages.*;
 import hotelier.Messages.ServerMessages.*;
 import hotelier.Structures.*;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -154,13 +150,7 @@ public class Sessione implements Runnable {
                             listaUtenti.add(utente.getUser()); // inserisco l'utente
     
                             // re - inserisco la lista di utenti nel file JSON
-                            File inputUtenti = new File(
-                                    "Utenti.json");
-                            try (FileWriter writer = new FileWriter(inputUtenti)) {
-                                new Gson().toJson(listaUtenti, writer);
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
+                            db.saveUtenti(listaUtenti);
     
                             out.writeObject(new ControlServerMessage(1)); //la registrazione ha avuto successo 
                             out.flush();
@@ -741,8 +731,6 @@ public class Sessione implements Runnable {
     public static boolean checkPassword(String pass) {
         return pass != null && !pass.contains(" ") && pass.length() >= 8;
     }
-
-
 
     /**
      * Funzione usata per mandare un messaggio di fine comunicazione al task delle notifiche del client.

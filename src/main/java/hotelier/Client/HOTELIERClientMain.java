@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 
 public class HOTELIERClientMain{
 
-    private static final String configFile = "client.properties"; 
+    private static final String configFile = "./src/main/resources/client.properties"; 
     private static int port; 
     private static String ipServer;
     private static String group;
@@ -39,6 +39,7 @@ public class HOTELIERClientMain{
             readConfig(); 
         }catch (IOException e){
             System.err.println("Errore durante la lettura del file di configurazione");
+            e.printStackTrace();
             System.exit(0);
         }         
 
