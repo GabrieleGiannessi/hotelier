@@ -122,6 +122,9 @@ public class JsonDB {
         }  
     }
 
+    /**
+     * Funzione che salva e sovrascrive nel file JSON la lista delle recensioni passata per parametro. 
+     */
     public synchronized void saveRecensioni (List<Recensione> listaRecensioni){
         File input = new File("Recensioni.json");
                         try (FileWriter writer = new FileWriter(input)) {
@@ -133,6 +136,9 @@ public class JsonDB {
                         }
     }
 
+    /**
+     * Funzione che salva e sovrascrive nel file JSON la lista degli hotel passata per parametro. 
+     */
     public synchronized void saveHotels (List<Hotel> listaHotels){
 
         File input = new File(
@@ -144,7 +150,9 @@ public class JsonDB {
             }
         }
     
-
+    /**
+     * Funzione che salva e sovrascrive nel file JSON la lista dei rank locali passata per parametro. 
+     */
     public synchronized  void saveRankings (List <LocalRank> listaRank){
         File input = new File(
             "Rankings.json");
@@ -155,6 +163,10 @@ public class JsonDB {
             }
         }
 
+    /**
+     * Questa funzione restituisce la lista delle città che sono presenti nel file degli hotel (hotels.json)
+     * @return res
+     */
     public synchronized List<String> getAllCities (){
         List <String> res = new ArrayList<String>(); 
             List<Hotel> listaHotels = instance != null ? instance.scanHotels() : null; 

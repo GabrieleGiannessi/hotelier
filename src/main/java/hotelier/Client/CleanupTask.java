@@ -7,8 +7,12 @@ import hotelier.Messages.ClientMessages.ControlClientMessage;
 import hotelier.Structures.Utente;
 
 /**
- * Questo task viene eseguito ogni qualvolta se esca dalla sessione in maniera "brutale": 
- * è una sorta di codice di cleanup che viene avviato per salvare le informazioni del client che si era autenticato al servizio
+ * Questo task viene eseguito ogni qualvolta se esca dalla sessione e l'utente rimane autenticato (causato da segnale di interruzione).
+ * è una sorta di codice di cleanup che viene avviato per salvare le informazioni del client che si era autenticato al servizio.
+ * Il funzionamento è il seguente: questo task viene registrato come shutdown hook nel thread principale del client, quando 
+ * il client riceve un segnale di interruzione avvia questo codice, che provvede a mandare al server un messaggio di controllo.
+ * Questo messaggio codifica un'uscita speciale in cui salviamo i dati dell'utente senza mandare messaggi UDP al task delle notifiche,
+ * in quanto esso è già terminato attraverso il segnale di interruzione precedente. 
  */
 
 public class CleanupTask extends Thread{

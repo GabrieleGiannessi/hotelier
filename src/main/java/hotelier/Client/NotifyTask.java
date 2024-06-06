@@ -9,6 +9,11 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.Properties;
 
+/*
+ * Questo client task rimane in ascolto sulle coordinate della socket multicast in attesa di un pacchetto.
+ * Quando arriva lo esamina : se non è un messaggio di fine comunicazione lo stampa su terminale, altrimenti il task si interrompe.   
+ */
+
 public class NotifyTask implements Runnable {
 
     private static final String configFile = "client.properties"; 

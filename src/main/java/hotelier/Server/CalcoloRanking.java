@@ -39,7 +39,7 @@ public class CalcoloRanking implements Runnable {
          
         List <LocalRank> before = db.scanLocalRankings(); //faccio una scansione dei ranking prima di aggiornare i valori dei rate degli hotel
         if (before == null){
-            makeLocalRankings();
+            makeLocalRankings(); //se i rank non sono inizializzati si inizializzano tramite questa funzione
             before = db.scanLocalRankings();
         } 
         
@@ -179,6 +179,13 @@ public class CalcoloRanking implements Runnable {
 
 
     /**
+     * Questa funzione si occupa di calcolare i nuovi valori dei voti riguardanti lo specifico hotel. 
+     * In particolare, sfrutta una funzione esponenziale per poter calcolare il peso che riguarda ogni recensione per il calcolo finale del voto.
+     * java.util.Date.getTime() : "Returns the number of milliseconds since January 1, 1970, 00:00:00 GMT represented by this Date object." da Oracle.
+     * Usiamo questa unità di misura per calcolare la differenza in millisecondi tra la data della recensione e la data odierna, il risultato non è altro
+     * che il parametro della funzione esponenziale, la quale scandisce i pesi delle recensioni (salviamo la somma dei pesi).
+     * Il peso calcolato viene moltiplicato ai voti, e il risultato viene aggiunto ai voti già registrati.
+     * Infine si calcola le medie dei voti dividendo le somme dei voti singoli per la somma dei pesi, e restituiamo i voti incapsulati in un oggetto Ratings 
      * 
      * @param recensioni
      * @return
@@ -224,6 +231,15 @@ public class CalcoloRanking implements Runnable {
         return h.getRatings();
     }
 
+    /**
+     * Funzione che calcola il nuovo valore del voto globale riferito all'hotel.
+     * Questa funzione segue lo stesso schema logico dell'algoritmo soprastante. 
+     * 
+     * @param recensioni
+     * @param h
+     * @return
+     */
+
     public static double makeGlobalRate (List<Recensione> recensioni, Hotel h){
 
         if (recensioni == null || recensioni.size() == 0) return h.getRate(); 
@@ -249,6 +265,12 @@ public class CalcoloRanking implements Runnable {
         return h.getRate();
         
     }
+
+    /**
+     * Questa funzione restituisce il local rank hotel con i voti migliori da un pool di rank hotel
+     * @param listaHotels
+     * @return
+     */
 
     public static LocalRankHotel getBestHotel (List <LocalRankHotel> listaHotels){
 

@@ -42,7 +42,7 @@ public class Sessione implements Runnable {
     @Override
     public void run() {
 
-        Utente user = null; //tengo traccia dell'utente che si autentica
+        Utente user = null; //istanzio questo oggetto per tenere traccia dell'utente che si autentica
 
         try (ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
                 ObjectInputStream in = new ObjectInputStream(s.getInputStream())) {
@@ -52,7 +52,7 @@ public class Sessione implements Runnable {
             while (!exit) {
                 ClientMessage op = new ControlClientMessage(9); 
                 try{
-                     op = (ClientMessage) in.readObject();
+                     op = (ClientMessage) in.readObject(); //mi metto in ascolto del messaggio dal client
 
                 }catch (IOException e){
                     //interruzione da parte del client
@@ -131,7 +131,7 @@ public class Sessione implements Runnable {
                                 }
                             }
     
-                            //prima di inserire l'utente nel db devo convertire la password in chiaro in una password cifrata (usando un algoritmo di cifratura: uso message digest MD5 che genera una stringa di 16 caratteri)
+                            //prima di inserire l'utente nel db devo convertire la password in chiaro in una password cifrata (usando un algoritmo di cifratura: uso message digest MD5 che genera una stringa di 32 caratteri)
                             String encryptedPassword = null; 
                             try {
                                 MessageDigest m = MessageDigest.getInstance("MD5");
@@ -227,6 +227,8 @@ public class Sessione implements Runnable {
                                     out.flush();
                                     break;
                                 }
+
+                                //controllo se la password è corretta cifrandola (la pass cifrata verrà confrontata con quelle presenti nel db) 
 
                                 String encryptedPassword = null; 
                             try {
@@ -409,7 +411,8 @@ public class Sessione implements Runnable {
     
                         case 5: // searchAllHotels
                         {
-                            List<LocalRank> listaRanks = db.scanLocalRankings();
+                            //faccio la scansione dei rank in quanto ho bisogno di ordinare gli hotel per le posizioni che hanno sul rank locale della città
+                            List<LocalRank> listaRanks = db.scanLocalRankings(); 
 
                             ClientMessage res; 
                             while ((res = (ClientMessage) in.readObject()) == null){}
@@ -739,6 +742,13 @@ public class Sessione implements Runnable {
         return pass != null && !pass.contains(" ") && pass.length() >= 8;
     }
 
+
+
+    /**
+     * Funzione usata per mandare un messaggio di fine comunicazione al task delle notifiche del client.
+     * 
+     * @param m, rappresenta il socket multicast su cui inoltriamo il datagramma 
+     */
     public void sendUDPmessage (MulticastSocket m){
             try{
                 String returnmess = "[FINE]";
